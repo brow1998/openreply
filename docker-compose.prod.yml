@@ -27,6 +27,10 @@ x-app: &app
     EMAIL_SERVER: smtp://mail:587?ignoreTLS=true
     EMAIL_FROM: ${EMAIL_FROM:-OpenReply <reply@useshelfie.com>}
     ALLOWED_EMAILS: ${ALLOWED_EMAILS:?without it anyone can sign up}
+    # Sign-in through Pedro and per-account access. Empty = off: the app behaves
+    # exactly as before (magic link + ALLOWED_EMAILS). Public client, no secret.
+    PEDRO_OAUTH_CLIENT_ID: ${PEDRO_OAUTH_CLIENT_ID:-}
+    PEDRO_BASE_URL: ${PEDRO_BASE_URL:-https://pedro.useshelfie.com}
     # Where operational alerts (worker down, token expiring...) are mailed, besides workspace owners.
     OPS_ALERT_EMAIL: ${OPS_ALERT_EMAIL:-${ALLOWED_EMAILS}}
     META_GRAPH_API_VERSION: ${META_GRAPH_API_VERSION:-v25.0}
