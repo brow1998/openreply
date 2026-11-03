@@ -23,7 +23,7 @@ export default function StatCard({ label, value, icon: Icon, trend, trendUp }: S
     <div className="panel p-4">
       <p className="flex items-center gap-1.5 text-xs text-muted">
         {Icon && <Icon size={14} strokeWidth={1.75} aria-hidden="true" />}
-        <span className="truncate">{label}</span>
+        <span className="leading-tight">{label}</span>
       </p>
       <p className="mt-1.5 font-mono text-2xl font-medium tabular-nums text-foreground">{value}</p>
       {trend && (

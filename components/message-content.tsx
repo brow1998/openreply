@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Clapperboard } from "lucide-react";
 import { useI18n } from "@/lib/i18n/provider";
 import type { InstagramOEmbed } from "@/lib/meta/oembed";
 import type { ThreadMessage } from "@/app/api/instagram/conversations/[id]/route";
@@ -42,13 +43,18 @@ function ShareCard({
   share,
   fallbackTitle,
   openLabel,
+  previewLabel,
+  hideLabel,
 }: {
   share: ThreadMessage["shares"][number];
   fallbackTitle: string;
   openLabel: string;
+  previewLabel: string;
+  hideLabel: string;
 }) {
   const src = embedUrl(share.link);
   const [oembed, setOembed] = useState<InstagramOEmbed | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
   useEffect(() => {
     if (!share.link || !src) return;
     let alive = true;
@@ -94,24 +100,37 @@ function ShareCard({
       </a>
     );
   }
+  // Without oEmbed all we have is the link: a compact dark card, with Instagram's
+  // own (white) embed only when asked for, so a long thread does not load dozens of iframes.
   return (
-    <div className="w-[min(100%,20.5rem)] overflow-hidden rounded-xl border border-border bg-white">
-      {/* The embed is taller than the card: the bottom is the like/comment row, which would not work here. */}
-      <div className="h-[30.5rem] overflow-hidden">
-        <iframe
-          src={src}
-          title={share.title || fallbackTitle}
-          loading="lazy"
-          scrolling="no"
-          sandbox="allow-scripts allow-same-origin allow-popups"
-          className="h-[34rem] w-full border-0"
-        />
+    <div className="w-[min(100%,20.5rem)] overflow-hidden rounded-xl border border-border bg-background text-foreground">
+      <div className="flex items-center gap-3 px-3 py-2.5">
+        <Clapperboard size={18} strokeWidth={1.75} className="shrink-0 text-accent" aria-hidden="true" />
+        <span className="min-w-0 flex-1 truncate text-xs font-medium">{share.title || fallbackTitle}</span>
+        <button
+          type="button"
+          onClick={() => setPreviewOpen((v) => !v)}
+          aria-expanded={previewOpen}
+          className="shrink-0 text-xs font-medium text-accent hover:text-accent-hover"
+        >
+          {previewOpen ? hideLabel : previewLabel}
+        </button>
       </div>
+      {previewOpen && (
+        <div className="h-[30.5rem] overflow-hidden bg-white">
+          <iframe
+            src={src}
+            title={share.title || fallbackTitle}
+            scrolling="no"
+            className="h-[34rem] w-full border-0"
+          />
+        </div>
+      )}
       <a
         href={share.link ?? undefined}
         target="_blank"
         rel="noopener noreferrer"
-        className="block border-t border-black/10 bg-white px-3 py-2 text-xs font-medium text-[#3d5afe]"
+        className="block border-t border-border px-3 py-2 text-xs font-medium text-accent hover:text-accent-hover"
       >
         {openLabel}
       </a>
@@ -152,7 +171,14 @@ export default function MessageContent({ message }: { message: ThreadMessage }) 
       )}
 
       {m.shares.map((s, i) => (
-        <ShareCard key={`share-${i}`} share={s} fallbackTitle={t("Shared a post or reel")} openLabel={t("Open on Instagram")} />
+        <ShareCard
+          key={`share-${i}`}
+          share={s}
+          fallbackTitle={t("Shared a post or reel")}
+          openLabel={t("Open on Instagram")}
+          previewLabel={t("Preview")}
+          hideLabel={t("Hide preview")}
+        />
       ))}
 
       {m.attachments.map((a, i) => {
