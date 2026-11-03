@@ -368,7 +368,7 @@ export default function CommentsPage() {
             {t("Needs reply")}
           </button>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {accounts.length > 1 && (
             <AccountSelect
               accounts={accounts}
