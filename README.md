@@ -14,8 +14,6 @@ Someone comments `LINK` on your reel, and OpenReply queues a DM with your link. 
 
 OpenReply is free, MIT-licensed software running on your own infrastructure, with no software seat limits or plan caps. Hosting and optional provider costs are separate.
 
-> **Supported by [Zernio](https://zernio.com/?utm_source=openreply&utm_medium=sponsorship&utm_campaign=openreply-integration&utm_content=readme-sponsor).** An optional paid Instagram connection provider that lets you avoid creating and reviewing your own Meta app. OpenReply still runs your campaigns, queues, logs, and inbox on your infrastructure. [Connect with Zernio](docs/zernio.md), or keep using your own Meta app.
-
 > **OpenReply is self-hosted. You have to deploy your own copy.**
 >
 > [openreply.diwen.dev](https://openreply.diwen.dev) is a demo of the dashboard, not a service you can sign up for. Creating an account there will never send a DM for you, and there is no hosted plan to upgrade to.
@@ -61,7 +59,7 @@ The web app receives the webhook and serves the dashboard. A separate worker pro
 
 ## Quick start
 
-1. **Choose your Instagram connection.** [Zernio](docs/zernio.md) is recommended if you want to avoid setting up your own Meta app. It is a paid service and sponsor, not a hosted OpenReply plan. Or follow the existing [direct Meta setup](docs/setup.md#the-meta-app).
+1. **Choose your Instagram connection.** Follow the [direct Meta setup](docs/setup.md#the-meta-app), or use [Zernio](docs/zernio.md), an optional paid provider, if you want to avoid setting up your own Meta app.
 2. **Deploy the app and worker.** Both paths need PostgreSQL, Redis, a public HTTPS URL, and email delivery for magic-link sign-in.
 3. **Connect an Instagram Business or Creator account** in Settings, create a campaign, and test a keyword comment from another account.
 

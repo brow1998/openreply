@@ -339,6 +339,48 @@ export async function getUserProfile(
   }
 }
 
+/**
+ * Remembers lookups for `hitMs`, and misses (null) for `missMs`, so a profile
+ * Instagram refused is not asked for again on every poll.
+ * shortcut: unbounded in-memory Map per server process, fine for a handful of accounts and inbox contacts; move to Redis if it ever serves many workspaces.
+ */
+export function createLookupCache<T>(hitMs: number, missMs: number, now: () => number = Date.now) {
+  const entries = new Map<string, { at: number; value: T | null }>();
+  return {
+    get(key: string): { value: T | null } | undefined {
+      const entry = entries.get(key);
+      if (!entry) return undefined;
+      if (now() - entry.at >= (entry.value === null ? missMs : hitMs)) {
+        entries.delete(key);
+        return undefined;
+      }
+      return { value: entry.value };
+    },
+    set(key: string, value: T | null) {
+      entries.set(key, { at: now(), value });
+    },
+  };
+}
+
+/** The connected account's own profile photo. Null on any failure: it is decoration. */
+export async function getProfilePictureUrl(accessToken: string): Promise<string | null> {
+  const url = new URL(`${instagramGraphBase()}/me`);
+  url.searchParams.set("fields", "profile_picture_url");
+  try {
+    const response = await fetch(url.toString(), {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return typeof data?.profile_picture_url === "string" && data.profile_picture_url
+      ? data.profile_picture_url
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function getUserUsername(
   accessToken: string,
   recipientId: string

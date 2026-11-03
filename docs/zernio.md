@@ -1,8 +1,7 @@
 # Connect Instagram with Zernio
 
-Zernio is an **optional paid connection provider and sponsor of OpenReply**. It manages the Instagram connection, platform credentials, API calls, and incoming events so you do not need to create and review your own Meta app. OpenReply stays self-hosted and continues to run campaigns, keyword matching, follow gates, queues, retries, logs, link tracking, and the inbox.
+Zernio is an **optional paid connection provider**. It manages the Instagram connection, platform credentials, API calls, and incoming events so you do not need to create and review your own Meta app. OpenReply stays self-hosted and continues to run campaigns, keyword matching, follow gates, queues, retries, logs, link tracking, and the inbox.
 
-[Explore Zernio](https://zernio.com/?utm_source=openreply&utm_medium=sponsorship&utm_campaign=openreply-integration&utm_content=provider-guide) · [Check pricing](https://zernio.com/pricing?utm_source=openreply&utm_medium=sponsorship&utm_campaign=openreply-integration&utm_content=provider-guide-pricing) · [Use your own Meta app instead](setup.md#the-meta-app)
 
 ## Before connecting
 
@@ -48,7 +47,7 @@ If you change your public deployment URL, update `NEXTAUTH_URL` on both processe
 
 Disconnecting an account from OpenReply does **not** delete it from Zernio. Manage the upstream account in Zernio separately. There is no automatic migration between Zernio and direct Meta.
 
-Sponsorship appears only in OpenReply’s project and interface surfaces. OpenReply does not append Zernio branding or promotional text to customer messages.
+OpenReply does not append Zernio branding or promotional text to customer messages.
 
 ### Delivery uncertainty and retries
 

@@ -18,10 +18,9 @@ import { readCache, writeCache } from "@/lib/client-cache";
 import type { ConversationListItem } from "@/app/api/instagram/conversations/route";
 import type { ThreadMessage } from "@/app/api/instagram/conversations/[id]/route";
 import MessageContent from "@/components/message-content";
-import Avatar from "@/components/avatar";
+import Avatar, { useInstagramProfiles } from "@/components/avatar";
 import GifPicker from "@/components/gif-picker";
 import { ImagePlay } from "lucide-react";
-import type { InstagramProfile } from "@/lib/meta/client";
 
 const POLL_MS = 12_000;
 // Cached list/threads are shown instantly on revisit, then revalidated in the
@@ -72,27 +71,10 @@ export default function InboxPage() {
   const active = conversations.find((c) => c.id === activeId) ?? null;
 
   // Photos and names, loaded after the list so the list itself never waits on them.
-  const [profiles, setProfiles] = useState<Record<string, InstagramProfile>>({});
-  const requestedProfiles = useRef(new Set<string>());
-  useEffect(() => {
-    if (!selectedAccountId) return;
-    const ids = conversations
-      .map((c) => c.contact.id)
-      .filter((id) => id && !requestedProfiles.current.has(`${selectedAccountId}:${id}`));
-    if (ids.length === 0) return;
-    ids.forEach((id) => requestedProfiles.current.add(`${selectedAccountId}:${id}`));
-    fetch(
-      `/api/instagram/profiles?instagramAccountId=${selectedAccountId}&ids=${ids.join(",")}`
-    )
-      .then((r) => r.json())
-      .then((payload) => {
-        if (payload.success) setProfiles((prev) => ({ ...prev, ...payload.data.profiles }));
-      })
-      .catch(() => {
-        // Photos are decoration: initials stay if this fails.
-        ids.forEach((id) => requestedProfiles.current.delete(`${selectedAccountId}:${id}`));
-      });
-  }, [conversations, selectedAccountId]);
+  const profiles = useInstagramProfiles(
+    selectedAccountId,
+    conversations.map((c) => c.contact.id)
+  );
 
   const displayName = (c: ConversationListItem) =>
     profiles[c.contact.id]?.name ?? (c.contact.username ? `@${c.contact.username}` : "unknown");

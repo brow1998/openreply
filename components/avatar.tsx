@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { InstagramProfile } from "@/lib/meta/client";
 
 // Stable hue per name, so the same person keeps the same color everywhere.
 function hueOf(name: string): number {
@@ -62,4 +63,40 @@ export default function Avatar({
       {initialsOf(name)}
     </span>
   );
+}
+
+// The profiles endpoint takes at most this many ids per request.
+const PROFILE_BATCH = 40;
+
+/**
+ * Names and photos for Instagram-scoped ids (DM contacts, commenters), keyed by
+ * id. Each id is asked for once per account: Instagram refuses people who never
+ * messaged the account, and a refusal must not turn into a retry loop.
+ */
+export function useInstagramProfiles(
+  accountId: string,
+  ids: (string | null | undefined)[]
+): Record<string, InstagramProfile> {
+  const [profiles, setProfiles] = useState<Record<string, InstagramProfile>>({});
+  const requested = useRef(new Set<string>());
+  const key = [...new Set(ids.filter((id): id is string => Boolean(id)))].join(",");
+
+  useEffect(() => {
+    if (!accountId || !key) return;
+    const missing = key.split(",").filter((id) => !requested.current.has(`${accountId}:${id}`));
+    if (missing.length === 0) return;
+    missing.forEach((id) => requested.current.add(`${accountId}:${id}`));
+    for (let i = 0; i < missing.length; i += PROFILE_BATCH) {
+      const batch = missing.slice(i, i + PROFILE_BATCH);
+      fetch(`/api/instagram/profiles?instagramAccountId=${accountId}&ids=${batch.join(",")}`)
+        .then((r) => r.json())
+        .then((payload) => {
+          if (payload.success) setProfiles((prev) => ({ ...prev, ...payload.data.profiles }));
+        })
+        // Photos are decoration: initials stay, and the ids are not asked for again.
+        .catch(() => {});
+    }
+  }, [accountId, key]);
+
+  return profiles;
 }

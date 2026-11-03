@@ -29,7 +29,7 @@ import {
   X,
 } from "lucide-react";
 import AccountSelect, { type AccountOption } from "@/components/account-select";
-import Avatar from "@/components/avatar";
+import Avatar, { useInstagramProfiles } from "@/components/avatar";
 import GifPicker from "@/components/gif-picker";
 import type { PostInsightsResponse } from "@/app/api/instagram/post-insights/route";
 import type {
@@ -282,6 +282,7 @@ export default function CommentsPage() {
                             id: `local-${crypto.randomUUID()}`,
                             text,
                             username: null,
+                            userId: null,
                             timestamp: new Date().toISOString(),
                             fromMe: true,
                           },
@@ -305,6 +306,13 @@ export default function CommentsPage() {
   const shownPosts = onlyPostsWithPending
     ? posts.filter((p) => pendingCount(p) > 0)
     : posts;
+  // Photos for the open post's commenters. Most never messaged the account, so
+  // Instagram refuses them and they keep their initials.
+  const commenterProfiles = useInstagramProfiles(
+    selectedAccountId,
+    active ? active.comments.flatMap((c) => [c.userId, ...c.replies.map((r) => r.userId)]) : []
+  );
+
   const visibleComments = active
     ? active.comments.filter((c) => !onlyPending || (!c.fromMe && !c.answered))
     : [];
@@ -508,7 +516,7 @@ export default function CommentsPage() {
               ) : (
                 visibleComments.map((c) => (
                   <div key={c.id} className="flex gap-3">
-                    <Avatar name={c.username ?? "?"} size={36} />
+                    <Avatar name={c.username ?? "?"} src={c.userId ? commenterProfiles[c.userId]?.profilePic : null} size={36} />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-baseline justify-between gap-2">
                         <span className="truncate text-sm font-medium text-foreground">
@@ -522,7 +530,7 @@ export default function CommentsPage() {
 
                       {c.replies.map((r) => (
                         <div key={r.id} className="mt-2 flex gap-2 text-xs">
-                          <Avatar name={r.fromMe ? "You" : (r.username ?? "?")} size={20} />
+                          <Avatar name={r.fromMe ? "You" : (r.username ?? "?")} src={r.userId ? commenterProfiles[r.userId]?.profilePic : null} size={20} />
                           <p className="min-w-0 text-muted">
                             <span className="font-medium text-foreground">
                               {r.fromMe ? t("You") : `@${r.username ?? "unknown"}`}

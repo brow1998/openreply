@@ -502,5 +502,14 @@
   "Interactions": "互動",
   "Metrics unavailable for this post.": "此貼文無法取得數據。",
   "When someone comments a campaign keyword, it shows up here.": "有人留言活動關鍵字時，會顯示在這裡。",
-  "Every DM your campaigns send, skip or fail is listed here.": "活動傳送、略過或失敗的每則私訊都會列在這裡。"
+  "Every DM your campaigns send, skip or fail is listed here.": "活動傳送、略過或失敗的每則私訊都會列在這裡。",
+  "Waiting for a reply": "等待回覆",
+  "Open Comments": "開啟留言",
+  "All caught up": "全部回覆完了",
+  "Every comment on your newest posts has a reply.": "最新貼文的每則留言都已回覆。",
+  "General": "一般",
+  "Appearance": "外觀",
+  "Theme": "主題",
+  "Dark": "深色",
+  "Light": "淺色"
 }

@@ -12,6 +12,7 @@ export interface CommentReply {
   id: string;
   text: string;
   username: string | null;
+  userId: string | null;
   timestamp: string | null;
   fromMe: boolean;
 }
@@ -85,6 +86,7 @@ export async function GET(request: NextRequest) {
           id: r.id,
           text: r.text ?? "",
           username: r.username ?? r.from?.username ?? null,
+          userId: r.from?.id ?? null,
           timestamp: r.timestamp ?? null,
           fromMe: r.from?.id === account.instagramId,
         }));

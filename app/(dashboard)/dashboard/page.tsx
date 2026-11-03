@@ -12,6 +12,7 @@ import AccountSelect, { type AccountOption } from "@/components/account-select";
 import StatCard from "@/components/stat-card";
 import { Hash, MousePointerClick, Percent, Send, SkipForward, TriangleAlert, Zap } from "lucide-react";
 import StatusBadge from "@/components/status-badge";
+import WaitingComments from "@/components/waiting-comments";
 
 interface DashboardStats {
   userName: string | null;
@@ -127,6 +128,16 @@ export default function DashboardPage() {
         <StatCard icon={MousePointerClick} label={t("Clicks")} value={stats?.clicksThisMonth ?? 0} />
         <StatCard icon={Percent} label={t("CTR")} value={`${stats?.ctrThisMonth ?? 0}%`} />
       </div>
+
+      {connectedCount > 0 && (
+        <WaitingComments
+          accountIds={
+            selectedAccountId === "all"
+              ? (stats?.instagramAccounts ?? []).map((a) => a.id)
+              : [selectedAccountId]
+          }
+        />
+      )}
 
       {/* Chart + Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 sm:gap-6">

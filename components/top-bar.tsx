@@ -9,7 +9,6 @@
 import type { StaticMessageKey } from "@/lib/i18n";
 import { useI18n } from "@/lib/i18n/provider";
 import { usePathname } from "next/navigation";
-import ThemeToggle from "@/components/theme-toggle";
 
 const pageTitles: Record<string, StaticMessageKey> = {
   "/dashboard": "Dashboard",
@@ -23,7 +22,8 @@ const pageTitles: Record<string, StaticMessageKey> = {
   "/automations/new": "New Campaign",
   "/logs": "DM Logs",
   "/settings": "Settings",
-  "/diagnostics": "Diagnostics",
+  "/settings/api": "Settings",
+  "/settings/diagnostics": "Settings",
 };
 
 interface TopBarProps {
@@ -67,7 +67,6 @@ export default function TopBar({
       </div>
 
       <div className="flex shrink-0 items-center gap-3">
-        <ThemeToggle />
         {instagramAccountCount > 0 ? (
           <p className="shrink-0 truncate text-sm text-muted">
             {instagramAccountCount > 1

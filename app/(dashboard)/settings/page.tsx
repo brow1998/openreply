@@ -1,6 +1,7 @@
 "use client";
 
 import LanguageSwitcher from "@/components/language-switcher";
+import ThemeToggle from "@/components/theme-toggle";
 import { useI18n } from "@/lib/i18n/provider";
 import { Suspense, useEffect, useState } from "react";
 import type { AccountOption } from "@/components/account-select";
@@ -143,10 +144,16 @@ export default function SettingsPage() {
         <InstagramConnectNotice />
       </Suspense>
 
-      <section className="panel p-4 sm:p-6 space-y-3">
-        <h2 className="text-sm font-semibold text-foreground">{t("Interface language")}</h2>
-        <LanguageSwitcher />
-        <p className="text-sm text-muted">{t("Saved in this browser. Campaign messages stay unchanged.")}</p>
+      <section className="panel p-4 sm:p-6 space-y-4">
+        <h2 className="text-sm font-semibold text-foreground">{t("Appearance")}</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span className="text-sm text-muted">{t("Theme")}</span>
+          <ThemeToggle />
+        </div>
+        <div className="space-y-1.5">
+          <LanguageSwitcher />
+          <p className="text-sm text-muted">{t("Saved in this browser. Campaign messages stay unchanged.")}</p>
+        </div>
       </section>
 
       <ZernioConnection canManage={canManageMembers} />

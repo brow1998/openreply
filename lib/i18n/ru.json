@@ -502,5 +502,14 @@
   "Interactions": "Взаимодействия",
   "Metrics unavailable for this post.": "Метрики для этой публикации недоступны.",
   "When someone comments a campaign keyword, it shows up here.": "Когда кто-то напишет ключевое слово кампании, оно появится здесь.",
-  "Every DM your campaigns send, skip or fail is listed here.": "Здесь видно каждое сообщение, которое кампании отправили, пропустили или не смогли отправить."
+  "Every DM your campaigns send, skip or fail is listed here.": "Здесь видно каждое сообщение, которое кампании отправили, пропустили или не смогли отправить.",
+  "Waiting for a reply": "Ждут ответа",
+  "Open Comments": "Открыть комментарии",
+  "All caught up": "Всё отвечено",
+  "Every comment on your newest posts has a reply.": "На все комментарии к новым публикациям есть ответ.",
+  "General": "Общие",
+  "Appearance": "Оформление",
+  "Theme": "Тема",
+  "Dark": "Тёмная",
+  "Light": "Светлая"
 }

@@ -180,7 +180,8 @@ export async function GET(request: NextRequest) {
         caption: m.caption?.trim().slice(0, 120) ?? null,
         permalink: m.permalink ?? null,
         thumbnailUrl: m.thumbnail_url ?? m.media_url ?? null,
-        mediaType: m.media_product_type ?? m.media_type,
+        // "REEL", "VIDEO", "CAROUSEL_ALBUM" or "IMAGE" (same values as the Comments grid).
+        mediaType: m.media_product_type === "REELS" ? "REEL" : m.media_type,
         timestamp: m.timestamp,
         views: ins?.views ?? null,
         reach: ins?.reach ?? null,

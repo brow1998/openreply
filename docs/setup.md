@@ -8,12 +8,12 @@ If you use a coding assistant, start with [Set it up with an AI assistant](#set-
 
 | Connection | What you configure | Costs |
 | --- | --- | --- |
-| **[Zernio](zernio.md), recommended for simpler connection setup** | A Zernio API key in Settings, a profile, and an Instagram account. OpenReply registers the webhook. No own Meta app or Meta secrets required. | Optional paid provider, plus your hosting. Zernio sponsors OpenReply. |
+| **[Zernio](zernio.md), optional paid provider** | A Zernio API key in Settings, a profile, and an Instagram account. OpenReply registers the webhook. No own Meta app or Meta secrets required. | Optional paid provider, plus your hosting. Zernio sponsors OpenReply. |
 | **[Your own Meta app](#the-meta-app)** | Your Meta app, Instagram Login, app secrets, webhook, and App Review where required. | Your hosting and any other services you use. No Zernio subscription. |
 
 Both use the official Instagram API and remain subject to Instagram’s policies, account requirements, permissions, rate limits, and messaging windows. Both need PostgreSQL, Redis, email delivery, and a running worker. Existing connections are not migrated automatically.
 
-Learn about the optional sponsor at [Zernio](https://zernio.com/?utm_source=openreply&utm_medium=sponsorship&utm_campaign=openreply-integration&utm_content=setup-provider). Check the [provider guide and feature limits](zernio.md) before choosing.
+Check the [provider guide and feature limits](zernio.md) before choosing.
 
 ## How it is built
 
@@ -327,7 +327,7 @@ Work through this order. Ask for decisions or actions only I can supply:
 1. Choose the Instagram provider BEFORE asking for Meta secrets or walking me
    through Meta App Review. Recommend Zernio if I want to avoid creating and
    reviewing my own Meta app. Clearly disclose that it is an optional PAID
-   service and OpenReply sponsor, that OpenReply remains self-hosted, and that
+   service, that OpenReply remains self-hosted, and that
    direct Meta is still supported. Explain the feature limits in docs/zernio.md.
    Ask which provider I want. Do not silently migrate existing accounts.
 

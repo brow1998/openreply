@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import "./landing.css";
 import Link from "next/link";
-import Image from "next/image";
 import localFont from "next/font/local";
 import { DemoNotice } from "@/components/demo-notice";
-import { zernioLink } from "@/lib/zernio-links";
 
 const geist = localFont({
   src: "../public/fonts/geist-latin.woff2",
@@ -47,26 +45,6 @@ export const metadata: Metadata = {
   description:
     "A free, self-hosted ManyChat alternative. Turn Instagram keyword comments into automatic private replies. Connect through your own Meta app or optional paid provider Zernio.",
 };
-
-function SponsorCredit({ placement }: { placement: string }) {
-  return (
-    <a
-      className="or-sponsor-credit"
-      href={zernioLink({ placement })}
-      target="_blank"
-      rel="sponsored noopener noreferrer"
-    >
-      <span>Supported by</span>
-      <Image
-        src="/brand/zernio-primary.svg"
-        alt="Zernio"
-        width={76}
-        height={24}
-      />
-      <span className="or-sponsor-disclosure">Optional paid provider</span>
-    </a>
-  );
-}
 
 function ReplyPreview() {
   return (
@@ -236,7 +214,6 @@ export default async function Home() {
             <p className="or-hero-note">
               Free software. Self-hosted. Your infrastructure.
             </p>
-            <SponsorCredit placement="landing-hero" />
           </div>
           <ReplyPreview />
         </section>
@@ -338,16 +315,8 @@ export default async function Home() {
                   <ul>
                     <li>No Meta app secrets to configure in OpenReply</li>
                     <li>OpenReply registers the webhook for you</li>
-                    <li>Optional paid service and project sponsor</li>
+                    <li>Optional paid service</li>
                   </ul>
-                  <a
-                    className="or-text-link"
-                    href={zernioLink({ placement: "landing-setup" })}
-                    rel="sponsored noopener noreferrer"
-                    target="_blank"
-                  >
-                    Explore Zernio <span aria-hidden="true">↗</span>
-                  </a>
                   <a className="or-provider-guide" href={ZERNIO_DOCS_URL}>
                     Read setup & feature limits
                   </a>
@@ -408,18 +377,10 @@ export default async function Home() {
                 <details>
                   <summary>Do I need Zernio?</summary>
                   <p>
-                    No. Zernio is an optional paid connection provider and
-                    sponsor. It can spare you setting up your own Meta app,
-                    while OpenReply still runs on your infrastructure. The
-                    direct Meta path stays available.{" "}
-                    <a
-                      href={zernioLink({ placement: "landing-faq" })}
-                      rel="sponsored noopener noreferrer"
-                      target="_blank"
-                    >
-                      Learn about Zernio
-                    </a>
-                    .
+                    No. Zernio is an optional paid connection provider. It
+                    can spare you setting up your own Meta app, while
+                    OpenReply still runs on your infrastructure. The direct
+                    Meta path stays available.
                   </p>
                 </details>
                 <details>
@@ -483,7 +444,6 @@ export default async function Home() {
               MIT licensed · Built by{" "}
               <a href="https://diwenhuang.ca">Diwen Huang</a>
             </span>
-            <SponsorCredit placement="landing-footer" />
           </div>
         </div>
       </footer>

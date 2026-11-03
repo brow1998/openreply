@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { Moon, Sun } from "lucide-react";
 import { useI18n } from "@/lib/i18n/provider";
 
 type Theme = "light" | "dark";
@@ -18,14 +19,14 @@ function subscribe(onChange: () => void) {
 const read = (): Theme | null =>
   document.documentElement.dataset.theme === "light" ? "light" : "dark";
 
+/** Dark/Light segmented control for Settings > Appearance. */
 export default function ThemeToggle() {
   const { t } = useI18n();
   // null on the server so the markup matches until hydration.
   const theme = useSyncExternalStore(subscribe, read, () => null);
 
-  function toggle() {
-    const next: Theme = theme === "dark" ? "light" : "dark";
-    document.documentElement.dataset.theme = next;
+  function choose(next: Theme) {
+    document.documentElement.setAttribute("data-theme", next);
     try {
       localStorage.setItem("openreply-theme", next);
     } catch {
@@ -34,14 +35,25 @@ export default function ThemeToggle() {
   }
 
   return (
-    <button
-      type="button"
-      onClick={toggle}
-      aria-label={t("Toggle theme")}
-      title={t("Toggle theme")}
-      className="shrink-0 rounded border border-border px-2.5 py-1.5 text-sm text-muted hover:text-foreground"
-    >
-      {theme === null ? "  " : theme === "dark" ? "☀" : "☾"}
-    </button>
+    <div role="radiogroup" aria-label={t("Theme")} className="inline-flex gap-1 rounded-lg border border-border p-0.5">
+      {([
+        ["dark", Moon, t("Dark")],
+        ["light", Sun, t("Light")],
+      ] as const).map(([value, Icon, label]) => (
+        <button
+          key={value}
+          type="button"
+          role="radio"
+          aria-checked={theme === value}
+          onClick={() => choose(value)}
+          className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors duration-(--dur-ui) ease-(--ease-out-quart) ${
+            theme === value ? "bg-surface-hover text-foreground" : "text-muted hover:text-foreground"
+          }`}
+        >
+          <Icon size={14} strokeWidth={1.75} aria-hidden="true" />
+          {label}
+        </button>
+      ))}
+    </div>
   );
 }

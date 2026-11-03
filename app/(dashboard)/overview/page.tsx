@@ -13,7 +13,8 @@ import { useI18n } from "@/lib/i18n/provider";
 import { useEffect, useState } from "react";
 import AccountSelect from "@/components/account-select";
 import StatCard from "@/components/stat-card";
-import { Bookmark, Eye, Heart, MessageCircle, Share2, Users } from "lucide-react";
+import { Bookmark, Eye, Heart, LayoutGrid, List, MessageCircle, Share2, Users } from "lucide-react";
+import OverviewPostGrid, { MediaTypeIcon } from "@/components/overview-post-grid";
 import FollowerChart from "@/components/follower-chart";
 import type { OverviewResponse } from "@/app/api/instagram/overview/route";
 
@@ -43,6 +44,7 @@ export default function OverviewPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedAccountId, setSelectedAccountId] = useState("all");
   const [count, setCount] = useState("50");
+  const [view, setView] = useState<"list" | "grid">("list");
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -191,9 +193,33 @@ export default function OverviewPage() {
 
       {/* Per-post table */}
       <div className="panel p-4 sm:p-6">
-        <h2 className="text-sm font-semibold text-foreground mb-4">{t("Posts")}</h2>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold text-foreground">{t("Posts")}</h2>
+          <div className="flex gap-1 rounded-lg border border-border p-0.5">
+            {([
+              ["list", List, t("List view")],
+              ["grid", LayoutGrid, t("Grid view")],
+            ] as const).map(([v, Icon, viewLabel]) => (
+              <button
+                key={v}
+                type="button"
+                aria-label={viewLabel}
+                aria-pressed={view === v}
+                title={viewLabel}
+                onClick={() => setView(v)}
+                className={`rounded-md p-1.5 transition-colors duration-(--dur-ui) ease-(--ease-out-quart) ${
+                  view === v ? "bg-surface-hover text-foreground" : "text-muted hover:text-foreground"
+                }`}
+              >
+                <Icon size={16} strokeWidth={1.75} />
+              </button>
+            ))}
+          </div>
+        </div>
         {posts.length === 0 ? (
           <p className="text-sm text-muted py-8 text-center">{t("No posts found")}</p>
+        ) : view === "grid" ? (
+          <OverviewPostGrid posts={posts} format={formatNumber} locale={locale} />
         ) : (
           // Eight metric columns can't compress into a phone; let the table keep
           // its natural width and scroll inside the panel instead.
@@ -208,7 +234,6 @@ export default function OverviewPage() {
                   <th className="py-2 px-3 font-medium text-right">{t("Comments")}</th>
                   <th className="py-2 px-3 font-medium text-right">{t("Saved")}</th>
                   <th className="py-2 px-3 font-medium text-right">{t("Shares")}</th>
-                  <th className="py-2 pl-3 font-medium text-right">{t("Date")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -217,29 +242,29 @@ export default function OverviewPage() {
                     key={p.id}
                     className="border-b border-border last:border-0"
                   >
-                    <td className="max-w-xs py-2 pr-4">
-                      <div className="flex min-w-0 items-center gap-3">
-                      {p.thumbnailUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={p.thumbnailUrl} alt="" loading="lazy" className="h-10 w-10 shrink-0 rounded-md object-cover" />
-                      ) : (
-                        <span className="h-10 w-10 shrink-0 rounded-md bg-surface-hover" />
-                      )}
-                      {p.permalink ? (
-                        <a
-                          href={p.permalink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block min-w-0 truncate text-foreground hover:text-accent"
-                        >
-                          {p.caption || t("{type} post", { type: p.mediaType })}
-                        </a>
-                      ) : (
-                        <span className="text-foreground truncate block">
-                          {p.caption || t("{type} post", { type: p.mediaType })}
+                    <td className="max-w-sm py-2.5 pr-4">
+                      <a
+                        href={p.permalink ?? undefined}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group flex min-w-0 items-center gap-3"
+                      >
+                        {p.thumbnailUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={p.thumbnailUrl} alt="" loading="lazy" className="h-16 w-14 shrink-0 rounded-lg object-cover" />
+                        ) : (
+                          <span className="h-16 w-14 shrink-0 rounded-lg bg-surface-hover" />
+                        )}
+                        <span className="min-w-0">
+                          <span className="line-clamp-2 text-sm leading-snug text-foreground group-hover:text-accent">
+                            {p.caption || t("{type} post", { type: p.mediaType })}
+                          </span>
+                          <span className="mt-1 flex items-center gap-1.5 font-mono text-xs text-muted">
+                            <MediaTypeIcon type={p.mediaType} />
+                            {formatDate(p.timestamp, locale)}
+                          </span>
                         </span>
-                      )}
-                      </div>
+                      </a>
                     </td>
                     <td className="px-3 py-2 text-right font-mono tabular-nums text-muted">
                       {formatNumber(p.views, locale)}
@@ -258,9 +283,6 @@ export default function OverviewPage() {
                     </td>
                     <td className="px-3 py-2 text-right font-mono tabular-nums text-muted">
                       {formatNumber(p.shares, locale)}
-                    </td>
-                    <td className="py-2 pl-3 text-right font-mono tabular-nums text-muted">
-                      {formatDate(p.timestamp, locale)}
                     </td>
                   </tr>
                 ))}
