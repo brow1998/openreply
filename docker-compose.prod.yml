@@ -167,7 +167,54 @@ services:
         limits:
           memory: 64M
 
+  # Daily Postgres dump (custom format, restorable with pg_restore), 14 days kept
+  # on the volume, plus a copy off the VPS when /root/openreply/rclone has a
+  # config for BACKUP_REMOTE (default: the house R2 bucket, under /openreply).
+  # Runs inside postgres:16-alpine so pg_dump always matches the server version.
+  # First dump 5 minutes after start, then every 24 h. A failed dump never kills
+  # the service (a restart loop would be worse than a missed dump).
+  db-backup-cron:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:?}
+      BACKUP_REMOTE: ${BACKUP_REMOTE:-r2:shelfie-backups/openreply}
+      RCLONE_CONFIG: /config/rclone/rclone.conf
+    volumes:
+      - backups:/backups
+      - /root/openreply/rclone:/config/rclone:ro
+    entrypoint:
+      - sh
+      - -c
+      - |
+        sleep 300
+        while true; do
+          (
+            set -e
+            f="/backups/$$(date -u +%Y%m%dT%H%M%SZ).dump"
+            pg_dump -h postgres -U openreply -d openreply -Fc -f "$$f.parcial"
+            mv "$$f.parcial" "$$f"
+            echo "[backup] $$(du -h "$$f" | cut -f1) $$f"
+            find /backups -name '*.dump' -mtime +14 -delete
+            if [ -n "$$BACKUP_REMOTE" ]; then
+              apk add --no-cache rclone >/dev/null
+              rclone copy "$$f" "$$BACKUP_REMOTE" && echo "[backup] remote copy ok: $$BACKUP_REMOTE"
+            else
+              echo "[backup] no BACKUP_REMOTE: local copy only, same disk as the database"
+            fi
+          ) || echo "[backup] WARNING: the daily dump failed"
+          sleep 86400
+        done
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
 volumes:
+  backups:
   pgdata:
   redisdata:
   dkim:
