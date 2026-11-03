@@ -6,6 +6,8 @@ import { Suspense, useEffect, useState } from "react";
 import type { AccountOption } from "@/components/account-select";
 import { ZernioConnection } from "@/components/zernio-connection";
 import { InstagramConnectNotice } from "@/components/instagram-connect-notice";
+import Avatar from "@/components/avatar";
+import { CircleCheck, CircleDashed } from "lucide-react";
 
 interface SettingsData {
   workspace: {
@@ -124,7 +126,7 @@ export default function SettingsPage() {
   }
 
   if (loading) {
-    return <div className="panel rounded p-8 h-64" />;
+    return <div className="mx-auto h-64 max-w-2xl animate-pulse panel" />;
   }
 
   const accounts = data?.instagramAccounts ?? [];
@@ -141,16 +143,16 @@ export default function SettingsPage() {
         <InstagramConnectNotice />
       </Suspense>
 
-      <section className="panel rounded p-4 sm:p-6 space-y-3">
-        <h2 className="text-base font-semibold">{t("Interface language")}</h2>
+      <section className="panel p-4 sm:p-6 space-y-3">
+        <h2 className="text-sm font-semibold text-foreground">{t("Interface language")}</h2>
         <LanguageSwitcher />
         <p className="text-sm text-muted">{t("Saved in this browser. Campaign messages stay unchanged.")}</p>
       </section>
 
       <ZernioConnection canManage={canManageMembers} />
 
-      <section className="panel rounded p-4 sm:p-6">
-        <h2 className="text-base font-semibold mb-6">{t("Instagram Connection")}</h2>
+      <section className="panel p-4 sm:p-6">
+        <h2 className="mb-4 text-sm font-semibold text-foreground">{t("Instagram Connection")}</h2>
 
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-3 py-3 border-b border-border">
@@ -161,12 +163,17 @@ export default function SettingsPage() {
               </p>
             </div>
             <span
-              className={`px-3 py-1.5 rounded-full text-xs font-medium ${
+              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
                 accounts.length > 0
                   ? "bg-success/10 text-success"
                   : "bg-warning/10 text-warning"
               }`}
             >
+              {accounts.length > 0 ? (
+                <CircleCheck size={12} strokeWidth={1.75} aria-hidden="true" />
+              ) : (
+                <CircleDashed size={12} strokeWidth={1.75} aria-hidden="true" />
+              )}
               {accounts.length > 0 ? t("Connected") : t("Not connected")}
             </span>
           </div>
@@ -178,12 +185,12 @@ export default function SettingsPage() {
                 {t(accounts.length === 1 ? "{count} connected Instagram profile" : "{count} connected Instagram profiles", { count: accounts.length })}
               </p>
             </div>
-            <span className="text-sm text-muted">
+            <span className="font-mono text-sm text-muted">
               {accounts.length > 0 ? t("{count} connected", { count: accounts.length }) : t("None")}
             </span>
           </div>
 
-          <div className="space-y-3 py-3">
+          <div className="divide-y divide-border">
             {accounts.length === 0 && (
               <p className="text-sm text-muted">
                 {t("Connect an Instagram professional account to launch campaigns.")}
@@ -192,10 +199,12 @@ export default function SettingsPage() {
             {accounts.map((account) => (
               <div
                 key={account.id}
-                className="flex flex-col gap-3 rounded border border-border bg-surface/70 p-4 sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between"
               >
-                <div>
-                  <p className="text-sm font-semibold text-foreground">
+                <div className="flex min-w-0 items-center gap-3">
+                  <Avatar name={account.username} size={36} />
+                  <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-foreground">
                     @{account.username}
                   </p>
                   <p className="mt-1 text-xs text-muted">
@@ -205,11 +214,12 @@ export default function SettingsPage() {
                       : t("not available")}</>}{" "}
                     · {account.webhookSubscribed ? t("Webhook ready") : t("Webhook pending")}
                   </p>
+                  </div>
                 </div>
                 <button
                   onClick={() => disconnectInstagram(account.id)}
                   disabled={busy === `disconnect:${account.id}`}
-                  className="inline-flex items-center justify-center rounded border border-error/20 px-4 py-2 text-sm font-medium text-error transition-all hover:border-error/40 hover:bg-error/10 disabled:opacity-50"
+                  className="inline-flex items-center justify-center rounded-lg border border-error/20 px-4 py-2 text-sm font-medium text-error transition-colors hover:border-error/40 hover:bg-error/10 disabled:opacity-50"
                 >
                   {busy === `disconnect:${account.id}`
                     ? t("Disconnecting...")
@@ -223,28 +233,31 @@ export default function SettingsPage() {
         <div className="mt-6 pt-4 border-t border-border flex gap-3">
           <a
             href="/api/instagram/connect"
-            className="px-4 py-2 rounded text-sm font-medium transition-colors bg-accent text-accent-foreground hover:bg-accent-hover"
+            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent-hover"
           >
             {t("Connect using your own Meta app")}
           </a>
         </div>
       </section>
 
-      <section className="panel rounded p-4 sm:p-6">
-        <h2 className="text-base font-semibold mb-6">{t("Team")}</h2>
+      <section className="panel p-4 sm:p-6">
+        <h2 className="mb-4 text-sm font-semibold text-foreground">{t("Team")}</h2>
         <div className="space-y-3">
           {membersData?.members.map((member) => (
             <div
               key={member.id}
               className="flex items-center justify-between gap-4 border-b border-border py-3 last:border-0"
             >
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-foreground">
-                  {member.user.name ?? member.user.email ?? t("Unknown member")}
-                </p>
-                <p className="text-xs text-muted">{member.user.email}</p>
+              <div className="flex min-w-0 items-center gap-3">
+                <Avatar name={member.user.name ?? member.user.email ?? "?"} size={32} />
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-foreground">
+                    {member.user.name ?? member.user.email ?? t("Unknown member")}
+                  </p>
+                  <p className="truncate text-xs text-muted">{member.user.email}</p>
+                </div>
               </div>
-              <span className="rounded-full border border-border px-3 py-1 text-xs font-semibold text-muted">
+              <span className="shrink-0 rounded-full border border-border px-2.5 py-0.5 text-xs font-medium text-muted">
                 {label(member.role)}
               </span>
             </div>
@@ -253,14 +266,14 @@ export default function SettingsPage() {
 
         {membersData?.invitations.length ? (
           <div className="mt-6 border-t border-border pt-4">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">
+            <p className="mb-1 text-xs font-medium text-muted">
               {t("Pending invites")}
             </p>
-            <div className="space-y-3">
+            <div className="divide-y divide-border">
               {membersData.invitations.map((invitation) => (
                 <div
                   key={invitation.id}
-                  className="flex flex-col gap-3 rounded border border-border bg-surface/70 p-3 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-foreground">
@@ -305,7 +318,7 @@ export default function SettingsPage() {
               value={inviteEmail}
               onChange={(event) => setInviteEmail(event.target.value)}
               placeholder="teammate@agency.com"
-              className="rounded border border-border bg-surface px-4 py-2 text-sm text-foreground outline-none transition-colors focus:border-accent/40"
+              className="rounded-lg border border-border bg-surface px-4 py-2 text-sm text-foreground outline-none transition-colors focus:border-accent/50"
               required
             />
             <select
@@ -313,7 +326,7 @@ export default function SettingsPage() {
               onChange={(event) =>
                 setInviteRole(event.target.value as "ADMIN" | "MEMBER")
               }
-              className="rounded border border-border bg-surface px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-accent/40"
+              className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-accent/50"
             >
               <option value="MEMBER">{t("Member")}</option>
               <option value="ADMIN">{t("Admin")}</option>
@@ -321,7 +334,7 @@ export default function SettingsPage() {
             <button
               type="submit"
               disabled={busy === "invite"}
-              className="rounded bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground transition-colors hover:bg-accent-hover disabled:opacity-50"
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground transition-colors hover:bg-accent-hover disabled:opacity-50"
             >
               {busy === "invite" ? t("Inviting...") : t("Invite")}
             </button>
@@ -332,8 +345,8 @@ export default function SettingsPage() {
         )}
       </section>
 
-      <section className="panel rounded p-4 sm:p-6">
-        <h2 className="text-base font-semibold mb-6">{t("Usage")}</h2>
+      <section className="panel p-4 sm:p-6">
+        <h2 className="mb-4 text-sm font-semibold text-foreground">{t("Usage")}</h2>
         <div className="flex items-center justify-between gap-3 py-3">
           <div>
             <p className="text-sm font-medium text-foreground">
@@ -343,7 +356,7 @@ export default function SettingsPage() {
               {t("Self-hosted — no plan limits.")}
             </p>
           </div>
-          <span className="text-sm font-semibold text-foreground">
+          <span className="font-mono text-lg font-medium tabular-nums text-foreground">
             {data?.workspace.dmsSentThisPeriod ?? 0}
           </span>
         </div>

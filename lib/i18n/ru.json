@@ -498,5 +498,9 @@
   "Send GIF": "Отправить GIF",
   "No GIFs found.": "GIF не найдены.",
   "Add a Giphy key to search GIFs. You can still paste a link.": "Добавьте ключ Giphy для поиска GIF. Ссылку можно вставить и так.",
-  "GIFs go out as a DM, not as a public reply.": "GIF уходят в личные сообщения, а не публичным ответом."
+  "GIFs go out as a DM, not as a public reply.": "GIF уходят в личные сообщения, а не публичным ответом.",
+  "Interactions": "Взаимодействия",
+  "Metrics unavailable for this post.": "Метрики для этой публикации недоступны.",
+  "When someone comments a campaign keyword, it shows up here.": "Когда кто-то напишет ключевое слово кампании, оно появится здесь.",
+  "Every DM your campaigns send, skip or fail is listed here.": "Здесь видно каждое сообщение, которое кампании отправили, пропустили или не смогли отправить."
 }

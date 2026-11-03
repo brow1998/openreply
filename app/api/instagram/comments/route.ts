@@ -35,6 +35,9 @@ export interface CommentPost {
   permalink: string | null;
   thumbnailUrl: string | null;
   timestamp: string | null;
+  /** "REEL", "VIDEO", "CAROUSEL_ALBUM" or "IMAGE": drives the corner icon on the grid. */
+  mediaType: string;
+  likeCount: number;
   commentsCount: number;
   comments: CommentThread[];
 }
@@ -74,6 +77,8 @@ export async function GET(request: NextRequest) {
       permalink: p.permalink ?? null,
       thumbnailUrl: p.thumbnail_url ?? p.media_url ?? null,
       timestamp: p.timestamp ?? null,
+      mediaType: p.media_product_type === "REELS" ? "REEL" : (p.media_type ?? "IMAGE"),
+      likeCount: p.like_count ?? 0,
       commentsCount: p.comments_count ?? 0,
       comments: (p.comments?.data ?? []).map((c) => {
         const replies = (c.replies?.data ?? []).map((r) => ({

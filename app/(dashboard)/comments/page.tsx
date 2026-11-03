@@ -13,10 +13,25 @@
 import type { Locale } from "@/lib/i18n";
 import { useI18n } from "@/lib/i18n/provider";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ExternalLink, Heart, LayoutGrid, List, MessageCircle, X } from "lucide-react";
+import {
+  Activity,
+  Bookmark,
+  Clapperboard,
+  ExternalLink,
+  Eye,
+  Heart,
+  Layers,
+  LayoutGrid,
+  List,
+  MessageCircle,
+  Share2,
+  Users,
+  X,
+} from "lucide-react";
 import AccountSelect, { type AccountOption } from "@/components/account-select";
 import Avatar from "@/components/avatar";
 import GifPicker from "@/components/gif-picker";
+import type { PostInsightsResponse } from "@/app/api/instagram/post-insights/route";
 import type {
   CommentPost,
   CommentThread,
@@ -41,6 +56,9 @@ function formatTime(iso: string | null, locale: Locale): string {
   return `${formatDay(iso, locale)} ${d.toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit" })}`;
 }
 
+const formatCount = (n: number, locale: Locale) =>
+  new Intl.NumberFormat(locale, { notation: "compact", maximumFractionDigits: 1 }).format(n);
+
 const pendingCount = (p: CommentPost) =>
   p.comments.filter((c) => !c.fromMe && !c.answered).length;
 
@@ -54,6 +72,54 @@ function Cover({ post, className }: { post: CommentPost; className: string }) {
     <img src={post.thumbnailUrl} alt="" loading="lazy" className={`${className} object-cover`} />
   ) : (
     <span className={`${className} bg-surface-hover`} />
+  );
+}
+
+function Metrics({
+  post,
+  insights,
+  locale,
+}: {
+  post: CommentPost;
+  insights: PostInsightsResponse | undefined;
+  locale: Locale;
+}) {
+  const { t } = useI18n();
+  const loaded = insights ?? null;
+  const tiles: [typeof Heart, string, number | null][] = [
+    [Heart, t("Likes"), post.likeCount],
+    [MessageCircle, t("Comments"), post.commentsCount],
+    [Eye, t("Views"), loaded?.views ?? null],
+    [Users, t("Reach"), loaded?.reach ?? null],
+    [Bookmark, t("Saved"), loaded?.saved ?? null],
+    [Share2, t("Shares"), loaded?.shares ?? null],
+    [Activity, t("Interactions"), loaded?.totalInteractions ?? null],
+  ];
+  const shown = tiles.filter(([, , value], i) => i < 2 || value !== null);
+
+  return (
+    <div className="shrink-0 border-b border-border px-4 py-3">
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+        {shown.map(([Icon, label, value]) => (
+          <div key={label} className="rounded-lg bg-surface px-2.5 py-2">
+            <div className="flex items-center gap-1.5 text-muted">
+              <Icon size={12} strokeWidth={1.75} aria-hidden="true" />
+              <span className="truncate text-[11px]">{label}</span>
+            </div>
+            <p className="mt-0.5 font-mono text-sm font-medium text-foreground">
+              {value === null ? "—" : formatCount(value, locale)}
+            </p>
+          </div>
+        ))}
+        {insights === undefined &&
+          [0, 1, 2].map((i) => (
+            <div key={i} className="h-[3.1rem] animate-pulse rounded-lg bg-surface-hover" />
+          ))}
+      </div>
+      {loaded?.unavailable && (
+        <p className="mt-2 text-xs text-muted">{t("Metrics unavailable for this post.")}</p>
+      )}
+    </div>
   );
 }
 
@@ -75,6 +141,7 @@ export default function CommentsPage() {
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [gifOpen, setGifOpen] = useState(false);
+  const [insights, setInsights] = useState<Record<string, PostInsightsResponse>>({});
   const inFlight = useRef(false);
 
   const active = posts.find((p) => p.id === activeId) ?? null;
@@ -133,6 +200,25 @@ export default function CommentsPage() {
     }, POLL_MS);
     return () => clearInterval(timer);
   }, [selectedAccountId, load]);
+
+  // Metrics for the open post, fetched once per post. Absent means still loading.
+  const requestedInsights = useRef(new Set<string>());
+  useEffect(() => {
+    const post = posts.find((p) => p.id === activeId);
+    if (!post || !selectedAccountId || requestedInsights.current.has(post.id)) return;
+    requestedInsights.current.add(post.id);
+    const none: PostInsightsResponse = {
+      views: null, reach: null, saved: null, shares: null, totalInteractions: null, unavailable: true,
+    };
+    fetch(
+      `/api/instagram/post-insights?instagramAccountId=${selectedAccountId}&mediaId=${post.id}&mediaType=${post.mediaType}`
+    )
+      .then((r) => r.json())
+      .then((payload) =>
+        setInsights((prev) => ({ ...prev, [post.id]: payload.success ? payload.data : none }))
+      )
+      .catch(() => setInsights((prev) => ({ ...prev, [post.id]: none })));
+  }, [activeId, posts, selectedAccountId]);
 
   // Escape closes the panel.
   useEffect(() => {
@@ -232,11 +318,16 @@ export default function CommentsPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">
-          {t("Comments")}
-        </h1>
+      <div className="mx-auto flex max-w-[58rem] flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
+          <button type="button" onClick={() => setOnlyPostsWithPending(false)} className={chip(!onlyPostsWithPending)}>
+            {t("All posts")}
+          </button>
+          <button type="button" onClick={() => setOnlyPostsWithPending(true)} className={chip(onlyPostsWithPending)}>
+            {t("Needs reply")}
+          </button>
+        </div>
+        <div className="flex items-center gap-2">
           {accounts.length > 1 && (
             <AccountSelect
               accounts={accounts}
@@ -245,44 +336,33 @@ export default function CommentsPage() {
               includeAll={false}
             />
           )}
-        </div>
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex gap-2">
-          <button type="button" onClick={() => setOnlyPostsWithPending(false)} className={chip(!onlyPostsWithPending)}>
-            {t("All posts")}
-          </button>
-          <button type="button" onClick={() => setOnlyPostsWithPending(true)} className={chip(onlyPostsWithPending)}>
-            {t("Needs reply")}
-          </button>
-        </div>
-        <div className="flex gap-1 rounded-lg border border-border p-0.5">
-          {([
-            ["grid", LayoutGrid, t("Grid view")],
-            ["list", List, t("List view")],
-          ] as const).map(([v, Icon, label]) => (
-            <button
-              key={v}
-              type="button"
-              aria-label={label}
-              aria-pressed={view === v}
-              title={label}
-              onClick={() => setView(v)}
-              className={`rounded-md p-1.5 transition-colors duration-(--dur-ui) ease-(--ease-out-quart) ${
-                view === v ? "bg-surface-hover text-foreground" : "text-muted hover:text-foreground"
-              }`}
-            >
-              <Icon size={16} strokeWidth={1.75} />
-            </button>
-          ))}
+          <div className="flex gap-1 rounded-lg border border-border p-0.5">
+            {([
+              ["grid", LayoutGrid, t("Grid view")],
+              ["list", List, t("List view")],
+            ] as const).map(([v, Icon, label]) => (
+              <button
+                key={v}
+                type="button"
+                aria-label={label}
+                aria-pressed={view === v}
+                title={label}
+                onClick={() => setView(v)}
+                className={`rounded-md p-1.5 transition-colors duration-(--dur-ui) ease-(--ease-out-quart) ${
+                  view === v ? "bg-surface-hover text-foreground" : "text-muted hover:text-foreground"
+                }`}
+              >
+                <Icon size={16} strokeWidth={1.75} />
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {loading && posts.length === 0 ? (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {Array.from({ length: 8 }, (_, i) => (
-            <div key={i} className="aspect-[4/5] animate-pulse rounded-xl bg-surface-hover" />
+        <div className="mx-auto grid max-w-[58rem] grid-cols-3 gap-1">
+          {Array.from({ length: 9 }, (_, i) => (
+            <div key={i} className="aspect-[3/4] animate-pulse bg-surface-hover" />
           ))}
         </div>
       ) : error ? (
@@ -292,7 +372,8 @@ export default function CommentsPage() {
       ) : shownPosts.length === 0 ? (
         <p className="py-10 text-center text-sm text-muted">{t("No posts yet.")}</p>
       ) : view === "grid" ? (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        // Same shape as Instagram's own profile grid: three columns, hairline gaps, 3:4 tiles.
+        <div className="mx-auto grid max-w-[58rem] grid-cols-3 gap-1">
           {shownPosts.map((p) => {
             const pending = pendingCount(p);
             return (
@@ -300,25 +381,31 @@ export default function CommentsPage() {
                 key={p.id}
                 type="button"
                 onClick={() => openPost(p.id)}
-                className="cover-tile group relative aspect-[4/5] overflow-hidden rounded-xl border border-border bg-surface text-left"
+                aria-label={p.caption || t("Comments")}
+                className="group relative aspect-[3/4] overflow-hidden bg-surface focus-visible:z-10"
               >
                 <Cover post={p} className="absolute inset-0 h-full w-full" />
-                {/* Dark scrim only so the caption stays readable over any art. */}
-                <span className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/5 to-transparent" />
-                <span className="absolute left-2.5 top-2.5 rounded-md bg-black/55 px-1.5 py-0.5 font-mono text-[11px] text-white">
-                  {formatDay(p.timestamp, locale)}
-                </span>
+                {p.mediaType === "REEL" && (
+                  <Clapperboard size={18} strokeWidth={1.75} aria-hidden="true" className="absolute right-2 top-2 text-white drop-shadow" />
+                )}
+                {p.mediaType === "CAROUSEL_ALBUM" && (
+                  <Layers size={18} strokeWidth={1.75} aria-hidden="true" className="absolute right-2 top-2 text-white drop-shadow" />
+                )}
                 {pending > 0 && (
-                  <span className="absolute right-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 font-mono text-xs font-medium text-accent-foreground">
+                  <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 font-mono text-xs font-medium text-accent-foreground">
                     <MessageCircle size={12} strokeWidth={2} aria-hidden="true" />
                     {pendingLabel(p)}
                   </span>
                 )}
-                <span className="absolute inset-x-0 bottom-0 p-3">
-                  <span className="line-clamp-2 text-xs leading-snug text-white">{p.caption || "—"}</span>
-                  <span className="mt-1.5 flex items-center gap-1 font-mono text-[11px] text-white/75">
-                    <MessageCircle size={11} strokeWidth={1.75} aria-hidden="true" />
-                    {p.commentsCount}
+                {/* As on Instagram: likes and comments appear over the cover on hover. */}
+                <span className="absolute inset-0 flex items-center justify-center gap-5 bg-black/50 font-mono text-sm font-medium text-white opacity-0 transition-opacity duration-(--dur-ui) ease-(--ease-out-quart) group-hover:opacity-100 group-focus-visible:opacity-100">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Heart size={16} strokeWidth={2} fill="currentColor" aria-hidden="true" />
+                    {formatCount(p.likeCount, locale)}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <MessageCircle size={16} strokeWidth={2} fill="currentColor" aria-hidden="true" />
+                    {formatCount(p.commentsCount, locale)}
                   </span>
                 </span>
               </button>
@@ -326,7 +413,7 @@ export default function CommentsPage() {
           })}
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-border">
+        <div className="mx-auto max-w-[58rem] overflow-hidden rounded-xl border border-border">
           {shownPosts.map((p) => {
             const pending = pendingCount(p);
             return (
@@ -403,6 +490,8 @@ export default function CommentsPage() {
                 <X size={18} strokeWidth={1.75} />
               </button>
             </header>
+
+            <Metrics post={active} insights={insights[active.id]} locale={locale} />
 
             <div className="flex shrink-0 gap-2 border-b border-border px-4 py-2.5">
               <button type="button" onClick={() => setOnlyPending(true)} className={chip(onlyPending)}>

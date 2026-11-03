@@ -27,12 +27,12 @@ export default async function LoginPage({
   const { t } = await getI18n();
   if (await isPublicDemoHost()) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-6">
+      <div className="flex min-h-screen items-center justify-center bg-background px-6">
         <div className="w-full max-w-md text-center">
-          <h1 className="text-2xl font-semibold text-foreground">
-            OpenReply
+          <h1 className="font-display text-3xl font-semibold tracking-tight text-foreground">
+            Open<span className="text-accent">Reply</span>
           </h1>
-          <div className="panel rounded p-8 mt-8 shadow-black/40">
+          <div className="panel mt-8 p-8">
             <h2 className="text-lg font-semibold text-foreground">
               {t("Sign-in is off on this demo")}
             </h2>
@@ -43,7 +43,7 @@ export default async function LoginPage({
               href={SETUP_DOCS_URL}
               target="_blank"
               rel="noreferrer"
-              className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded bg-accent px-6 py-3.5 text-sm font-semibold text-accent-foreground shadow-indigo-500/25 transition-all hover:shadow-indigo-500/30"
+              className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-6 py-3.5 text-sm font-semibold text-accent-foreground transition-colors duration-(--dur-ui) ease-(--ease-out-quart) hover:bg-accent-hover"
             >
               {t("Clone it yourself")} <span aria-hidden="true">↗</span>
             </a>
@@ -70,11 +70,11 @@ export default async function LoginPage({
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6">
+    <div className="flex min-h-screen items-center justify-center bg-background px-6">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-semibold text-foreground">
-            OpenReply
+          <h1 className="font-display text-3xl font-semibold tracking-tight text-foreground">
+            Open<span className="text-accent">Reply</span>
           </h1>
           <p className="text-muted text-sm leading-relaxed mt-2">
             {selectedTemplate
@@ -85,9 +85,9 @@ export default async function LoginPage({
 
         <DemoNotice variant="panel" />
 
-        <div className="panel rounded p-8 shadow-black/40">
+        <div className="panel p-8">
           {selectedTemplate && !checkEmail && (
-            <div className="mb-5 border border-accent/20 bg-accent/10 p-4">
+            <div className="mb-5 rounded-lg bg-accent/10 p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-accent">
                 {t("Template selected")}
               </p>
@@ -99,7 +99,7 @@ export default async function LoginPage({
 
           {checkEmail ? (
             <div className="text-center py-4">
-              <h2 className="text-lg font-semibold mb-2">{t("Check your email")}</h2>
+              <h2 className="mb-2 font-display text-lg font-semibold tracking-tight">{t("Check your email")}</h2>
               <p className="text-sm text-muted">
                 {t("We sent you a secure sign-in link. Open it on this device to continue.")}
               </p>
@@ -120,13 +120,13 @@ export default async function LoginPage({
                   required
                   autoComplete="email"
                   placeholder="you@company.com"
-                  className="w-full px-4 py-3 rounded bg-surface border border-border text-sm text-foreground placeholder:text-muted focus:border-accent/40 focus:outline-none transition-colors"
+                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted transition-colors duration-(--dur-ui) ease-(--ease-out-quart) focus:border-accent/50 focus:outline-none"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full inline-flex items-center justify-center gap-2 rounded bg-accent px-6 py-3.5 text-sm font-semibold text-accent-foreground shadow-indigo-500/25 transition-all hover:shadow-indigo-500/30"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-6 py-3.5 text-sm font-semibold text-accent-foreground transition-colors duration-(--dur-ui) ease-(--ease-out-quart) hover:bg-accent-hover"
               >
                 {t("Email me a magic link")}
               </button>

@@ -775,10 +775,12 @@ export interface InboxPost {
   id: string;
   caption?: string;
   media_type?: string;
+  media_product_type?: string;
   thumbnail_url?: string;
   media_url?: string;
   permalink?: string;
   timestamp?: string;
+  like_count?: number;
   comments_count?: number;
   comments?: { data: InboxComment[] };
 }
@@ -796,7 +798,7 @@ export async function getInboxPosts(
   const url = new URL(`${instagramGraphBase()}/me/media`);
   url.searchParams.set(
     "fields",
-    "id,caption,media_type,thumbnail_url,media_url,permalink,timestamp,comments_count," +
+    "id,caption,media_type,media_product_type,thumbnail_url,media_url,permalink,timestamp,like_count,comments_count," +
       `comments.order(reverse_chronological).limit(${commentLimit}){id,text,timestamp,like_count,from,username,replies{id,text,timestamp,from,username}}`
   );
   url.searchParams.set("limit", String(postLimit));

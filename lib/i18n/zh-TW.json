@@ -498,5 +498,9 @@
   "Send GIF": "傳送 GIF",
   "No GIFs found.": "找不到 GIF。",
   "Add a Giphy key to search GIFs. You can still paste a link.": "新增 Giphy 金鑰即可搜尋 GIF，仍可貼上連結。",
-  "GIFs go out as a DM, not as a public reply.": "GIF 會以私訊傳送，無法公開回覆。"
+  "GIFs go out as a DM, not as a public reply.": "GIF 會以私訊傳送，無法公開回覆。",
+  "Interactions": "互動",
+  "Metrics unavailable for this post.": "此貼文無法取得數據。",
+  "When someone comments a campaign keyword, it shows up here.": "有人留言活動關鍵字時，會顯示在這裡。",
+  "Every DM your campaigns send, skip or fail is listed here.": "活動傳送、略過或失敗的每則私訊都會列在這裡。"
 }

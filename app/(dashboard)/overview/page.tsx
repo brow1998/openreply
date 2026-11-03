@@ -13,6 +13,7 @@ import { useI18n } from "@/lib/i18n/provider";
 import { useEffect, useState } from "react";
 import AccountSelect from "@/components/account-select";
 import StatCard from "@/components/stat-card";
+import { Bookmark, Eye, Heart, MessageCircle, Share2, Users } from "lucide-react";
 import FollowerChart from "@/components/follower-chart";
 import type { OverviewResponse } from "@/app/api/instagram/overview/route";
 
@@ -78,7 +79,7 @@ export default function OverviewPage() {
     return (
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
         {[...Array(6)].map((_, i) => (
-          <div key={i} className="panel rounded p-4 h-24 sm:p-5">
+          <div key={i} className="panel h-[5.5rem] animate-pulse p-4">
             <div className="h-4 w-16 bg-surface-hover rounded" />
             <div className="mt-3 h-6 w-20 bg-surface-hover rounded" />
           </div>
@@ -89,7 +90,7 @@ export default function OverviewPage() {
 
   if (error) {
     return (
-      <div className="panel rounded p-8 text-center">
+      <div className="panel p-8 text-center">
         <p className="text-sm text-error">{error === "Failed to load overview" ? t("Failed to load overview") : error}</p>
         {error.includes("connect") && (
           <a
@@ -113,8 +114,7 @@ export default function OverviewPage() {
       {data.limitations?.map(note => <p key={note} className="text-sm text-muted">{note}</p>)}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <h1 className="text-lg font-semibold text-foreground">{t("Overview")}</h1>
-          <p className="text-sm text-muted mt-1">
+          <p className="text-sm text-muted">
             {data.provider !== "ZERNIO" && data.requestedCount === "all" ? t("All-time") : t("Recent")} —{" "}
             {t(totals.posts === 1 ? "{count} post" : "{count} posts", { count: totals.posts })} {t("from @")}
             {data.account.username}
@@ -160,7 +160,7 @@ export default function OverviewPage() {
       </div>
 
       {!insightsAvailable && (
-        <div className="panel rounded p-4 border border-border">
+        <div className="panel p-4">
           <p className="text-sm text-foreground">
             {t("Views, reach, saved and shares need the insights permission.")}
           </p>
@@ -178,19 +178,19 @@ export default function OverviewPage() {
 
       {/* Aggregate totals */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-        <StatCard label={t("Views")} value={formatNumber(totals.views, locale)} />
-        <StatCard label={t("Reach")} value={formatNumber(totals.reach, locale)} />
-        <StatCard label={t("Likes")} value={formatNumber(totals.likes, locale)} />
-        <StatCard label={t("Comments")} value={formatNumber(totals.comments, locale)} />
-        <StatCard label={t("Saved")} value={formatNumber(totals.saved, locale)} />
-        <StatCard label={t("Shares")} value={formatNumber(totals.shares, locale)} />
+        <StatCard icon={Eye} label={t("Views")} value={formatNumber(totals.views, locale)} />
+        <StatCard icon={Users} label={t("Reach")} value={formatNumber(totals.reach, locale)} />
+        <StatCard icon={Heart} label={t("Likes")} value={formatNumber(totals.likes, locale)} />
+        <StatCard icon={MessageCircle} label={t("Comments")} value={formatNumber(totals.comments, locale)} />
+        <StatCard icon={Bookmark} label={t("Saved")} value={formatNumber(totals.saved, locale)} />
+        <StatCard icon={Share2} label={t("Shares")} value={formatNumber(totals.shares, locale)} />
       </div>
 
       {/* Follower trend — account-level, independent of the post range */}
       <FollowerChart data={followerHistory} followers={followers} />
 
       {/* Per-post table */}
-      <div className="panel rounded p-4 sm:p-6">
+      <div className="panel p-4 sm:p-6">
         <h2 className="text-sm font-semibold text-foreground mb-4">{t("Posts")}</h2>
         {posts.length === 0 ? (
           <p className="text-sm text-muted py-8 text-center">{t("No posts found")}</p>
@@ -200,7 +200,7 @@ export default function OverviewPage() {
           <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
             <table className="w-full min-w-[720px] text-sm">
               <thead>
-                <tr className="text-left text-xs uppercase tracking-wide text-muted border-b border-border">
+                <tr className="border-b border-border text-left text-xs text-muted">
                   <th className="py-2 pr-4 font-medium">{t("Post")}</th>
                   <th className="py-2 px-3 font-medium text-right">{t("Views")}</th>
                   <th className="py-2 px-3 font-medium text-right">{t("Reach")}</th>
@@ -217,13 +217,20 @@ export default function OverviewPage() {
                     key={p.id}
                     className="border-b border-border last:border-0"
                   >
-                    <td className="py-3 pr-4 max-w-xs">
+                    <td className="max-w-xs py-2 pr-4">
+                      <div className="flex min-w-0 items-center gap-3">
+                      {p.thumbnailUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={p.thumbnailUrl} alt="" loading="lazy" className="h-10 w-10 shrink-0 rounded-md object-cover" />
+                      ) : (
+                        <span className="h-10 w-10 shrink-0 rounded-md bg-surface-hover" />
+                      )}
                       {p.permalink ? (
                         <a
                           href={p.permalink}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-foreground hover:text-accent truncate block"
+                          className="block min-w-0 truncate text-foreground hover:text-accent"
                         >
                           {p.caption || t("{type} post", { type: p.mediaType })}
                         </a>
@@ -232,26 +239,27 @@ export default function OverviewPage() {
                           {p.caption || t("{type} post", { type: p.mediaType })}
                         </span>
                       )}
+                      </div>
                     </td>
-                    <td className="py-3 px-3 text-right text-muted">
+                    <td className="px-3 py-2 text-right font-mono tabular-nums text-muted">
                       {formatNumber(p.views, locale)}
                     </td>
-                    <td className="py-3 px-3 text-right text-muted">
+                    <td className="px-3 py-2 text-right font-mono tabular-nums text-muted">
                       {formatNumber(p.reach, locale)}
                     </td>
-                    <td className="py-3 px-3 text-right text-muted">
+                    <td className="px-3 py-2 text-right font-mono tabular-nums text-muted">
                       {formatNumber(p.likes, locale)}
                     </td>
-                    <td className="py-3 px-3 text-right text-muted">
+                    <td className="px-3 py-2 text-right font-mono tabular-nums text-muted">
                       {formatNumber(p.comments, locale)}
                     </td>
-                    <td className="py-3 px-3 text-right text-muted">
+                    <td className="px-3 py-2 text-right font-mono tabular-nums text-muted">
                       {formatNumber(p.saved, locale)}
                     </td>
-                    <td className="py-3 px-3 text-right text-muted">
+                    <td className="px-3 py-2 text-right font-mono tabular-nums text-muted">
                       {formatNumber(p.shares, locale)}
                     </td>
-                    <td className="py-3 pl-3 text-right text-muted">
+                    <td className="py-2 pl-3 text-right font-mono tabular-nums text-muted">
                       {formatDate(p.timestamp, locale)}
                     </td>
                   </tr>

@@ -102,7 +102,7 @@ export default function ImportCampaignsPage() {
       </div>
 
       {error && (
-        <div className="p-4 rounded bg-error/10 border border-error/20 text-error text-sm">
+        <div className="p-4 rounded-lg bg-error/10 border border-error/20 text-error text-sm">
           {error}
         </div>
       )}
@@ -129,7 +129,7 @@ export default function ImportCampaignsPage() {
           onChange={(e) => setCsv(e.target.value)}
           placeholder={SAMPLE}
           rows={10}
-          className="w-full px-4 py-3 rounded bg-surface border border-border text-sm font-mono text-foreground placeholder:text-zinc-600 focus:border-accent/40 focus:outline-none resize-y"
+          className="w-full px-4 py-3 rounded-lg bg-surface border border-border text-sm font-mono text-foreground placeholder:text-zinc-600 focus:border-accent/50 focus:outline-none resize-y"
         />
         <button
           type="button"
@@ -143,13 +143,13 @@ export default function ImportCampaignsPage() {
       <div className="flex items-center gap-4">
         <button
           onClick={startImport}
-          className="px-5 py-2 rounded bg-accent text-sm font-medium text-accent-foreground hover:bg-accent-hover"
+          className="px-5 py-2 rounded-lg bg-accent text-sm font-medium text-accent-foreground hover:bg-accent-hover"
         >
           {t("Review and import")}
         </button>
         <button
           onClick={() => router.push("/campaigns")}
-          className="px-5 py-2 rounded text-sm text-muted hover:text-foreground border border-border"
+          className="px-5 py-2 rounded-lg text-sm text-muted hover:text-foreground border border-border"
         >
           {t("Cancel")}
         </button>

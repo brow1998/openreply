@@ -44,11 +44,11 @@ export default function KeywordInput({ keywords, onChange, max = 10 }: KeywordIn
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap gap-2 p-3 rounded bg-surface border border-border min-h-[48px]">
+      <div className="flex flex-wrap gap-2 p-3 rounded-lg bg-surface border border-border min-h-[48px]">
         {keywords.map((keyword) => (
           <span
             key={keyword}
-            className="inline-flex items-center gap-2 px-2 py-1 rounded border border-border text-xs"
+            className="inline-flex items-center gap-2 px-2 py-1 rounded-lg border border-border text-xs"
           >
             {keyword}
             <button

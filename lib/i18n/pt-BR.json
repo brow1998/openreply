@@ -498,5 +498,9 @@
   "Send GIF": "Enviar GIF",
   "No GIFs found.": "Nenhum GIF encontrado.",
   "Add a Giphy key to search GIFs. You can still paste a link.": "Adicione uma chave do Giphy para buscar GIFs. Você ainda pode colar um link.",
-  "GIFs go out as a DM, not as a public reply.": "GIFs saem por DM, não como resposta pública."
+  "GIFs go out as a DM, not as a public reply.": "GIFs saem por DM, não como resposta pública.",
+  "Interactions": "Interações",
+  "Metrics unavailable for this post.": "Métricas indisponíveis para este post.",
+  "When someone comments a campaign keyword, it shows up here.": "Quando alguém comentar uma palavra-chave de campanha, ela aparece aqui.",
+  "Every DM your campaigns send, skip or fail is listed here.": "Toda DM que suas campanhas enviam, pulam ou falham aparece aqui."
 }

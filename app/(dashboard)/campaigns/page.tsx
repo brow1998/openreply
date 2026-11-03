@@ -11,6 +11,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AccountSelect, { type AccountOption } from "@/components/account-select";
+import { Clock, Link2, Pause, Play, Plus, UserCheck } from "lucide-react";
 import { readCache, writeCache } from "@/lib/client-cache";
 
 interface Campaign {
@@ -260,7 +261,7 @@ export default function CampaignsPage() {
     return (
       <div className="space-y-4">
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="panel rounded p-6 h-36" />
+          <div key={i} className="panel p-6 h-36" />
         ))}
       </div>
     );
@@ -299,14 +300,15 @@ export default function CampaignsPage() {
           )}
           <Link
             href="/campaigns/import"
-            className="flex-1 rounded border border-border px-4 py-2 text-center text-sm font-medium text-muted hover:text-foreground sm:flex-none"
+            className="flex-1 rounded-lg border border-border px-4 py-2 text-center text-sm font-medium text-muted transition-colors duration-(--dur-ui) ease-(--ease-out-quart) hover:border-border-hover hover:text-foreground sm:flex-none"
           >
             {t("Import")}
           </Link>
           <Link
             href="/campaigns/new"
-            className="flex-1 rounded bg-accent px-4 py-2 text-center text-sm font-medium text-accent-foreground hover:bg-accent-hover sm:flex-none"
+            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground transition-colors duration-(--dur-ui) ease-(--ease-out-quart) hover:bg-accent-hover sm:flex-none"
           >
+            <Plus size={16} strokeWidth={2} aria-hidden="true" />
             {t("New Campaign")}
           </Link>
         </div>
@@ -319,7 +321,7 @@ export default function CampaignsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t("Search campaigns by name, keyword, or message…")}
-            className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-accent/40 focus:outline-none"
+            className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-accent/50 focus:outline-none"
           />
           <div className="inline-flex shrink-0 rounded-lg bg-surface p-1">
             {(["all", "active", "paused"] as const).map((s) => (
@@ -329,7 +331,7 @@ export default function CampaignsPage() {
                 onClick={() => setStatusFilter(s)}
                 className={`rounded-md px-3 py-1.5 text-sm capitalize transition-colors ${
                   statusFilter === s
-                    ? "bg-background font-medium text-foreground ring-1 ring-accent/40"
+                    ? "bg-accent/10 font-medium text-accent"
                     : "text-muted hover:text-foreground"
                 }`}
               >
@@ -342,15 +344,16 @@ export default function CampaignsPage() {
 
       {/* Empty state */}
       {automations.length === 0 && (
-        <div className="panel rounded p-8 text-center sm:p-12">
-          <h3 className="text-lg font-semibold mb-2">{t("No campaigns yet")}</h3>
+        <div className="panel p-8 text-center sm:p-12">
+          <h3 className="mb-2 font-display text-xl font-semibold tracking-tight">{t("No campaigns yet")}</h3>
           <p className="text-sm text-muted mb-6 max-w-sm mx-auto">
             {t("Create your first comment-to-DM campaign to turn a post or reel into a measurable conversation flow.")}
           </p>
           <Link
             href="/campaigns/new"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded bg-accent text-sm font-semibold text-accent-foreground hover:bg-accent-hover transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground transition-colors duration-(--dur-ui) ease-(--ease-out-quart) hover:bg-accent-hover"
           >
+            <Plus size={16} strokeWidth={2} aria-hidden="true" />
             {t("Create Campaign")}
           </Link>
         </div>
@@ -358,7 +361,7 @@ export default function CampaignsPage() {
 
       {/* No matches for the current filter */}
       {automations.length > 0 && filtered.length === 0 && (
-        <div className="panel rounded p-8 text-center text-sm text-muted">
+        <div className="panel p-8 text-center text-sm text-muted">
           {t("No campaigns match your search.")}
         </div>
       )}
@@ -371,7 +374,7 @@ export default function CampaignsPage() {
           <div
             key={auto.id}
             onClick={() => router.push(`/campaigns/${auto.id}`)}
-            className="panel rounded p-4 hover:border-border-hover transition-all cursor-pointer"
+            className="panel cursor-pointer p-4 transition-colors duration-(--dur-ui) ease-(--ease-out-quart) hover:border-border-hover"
           >
             {/* Wraps rather than compressing: on a phone the action buttons drop
                 to their own line instead of squeezing the campaign summary. */}
@@ -391,7 +394,7 @@ export default function CampaignsPage() {
                     <img
                       src={thumbnails[auto.postId]}
                       alt={t("Campaign reel")}
-                      className="w-12 h-12 rounded object-cover border border-border hover:border-border-hover"
+                      className="h-28 w-[5.25rem] rounded-lg object-cover transition-opacity duration-(--dur-ui) hover:opacity-90"
                       onError={(e) => {
                         e.currentTarget.style.display = "none";
                       }}
@@ -409,7 +412,7 @@ export default function CampaignsPage() {
                     <img
                       src={thumbnails[auto.postId]}
                       alt={t("Campaign post")}
-                      className="w-12 h-12 rounded object-cover border border-border"
+                      className="h-28 w-[5.25rem] rounded-lg object-cover"
                       onError={(e) => {
                         e.currentTarget.style.display = "none";
                       }}
@@ -419,31 +422,39 @@ export default function CampaignsPage() {
               )}
               <div className="min-w-[12rem] flex-1">
                 <div className="flex flex-wrap items-center gap-2 mb-2">
-                  <h3 className="text-sm font-semibold truncate">{auto.name}</h3>
+                  <h3 className="truncate text-base font-semibold">{auto.name}</h3>
                   <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-xs text-muted">
                     @{auto.instagramAccount.username}
                   </span>
                   <span
-                    className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
                       auto.isActive
-                        ? "bg-success/10 text-success"
-                        : "bg-zinc-500/10 text-muted"
+                        ? "bg-success/15 text-success"
+                        : "bg-surface-hover text-muted"
                     }`}
                   >
+                    {auto.isActive ? (
+                      <Play size={11} strokeWidth={2} fill="currentColor" aria-hidden="true" />
+                    ) : (
+                      <Pause size={11} strokeWidth={2} aria-hidden="true" />
+                    )}
                     {auto.isActive ? t("Active") : t("Paused")}
                   </span>
                   {auto.pendingNextReel && (
-                    <span className="shrink-0 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-warning">
+                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-xs font-medium text-warning">
+                      <Clock size={11} strokeWidth={2} aria-hidden="true" />
                       {t("Waiting for next reel")}
                     </span>
                   )}
                   {auto.requireFollow && (
-                    <span className="shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">
+                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">
+                      <UserCheck size={11} strokeWidth={2} aria-hidden="true" />
                       {t("Follow gate")}
                     </span>
                   )}
                   {auto.trackedLinks.length >= 2 && (
-                    <span className="shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">
+                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">
+                      <Link2 size={11} strokeWidth={2} aria-hidden="true" />
                       {t("2 links")}
                     </span>
                   )}
@@ -454,7 +465,7 @@ export default function CampaignsPage() {
                   {auto.keywords.map((kw) => (
                     <span
                       key={kw}
-                      className="px-2 py-0.5 rounded-md bg-accent/10 text-accent text-xs font-medium border border-accent/10"
+                      className="rounded-md bg-accent/10 px-2 py-0.5 font-mono text-xs font-medium text-accent"
                     >
                       {kw}
                     </span>
@@ -472,7 +483,7 @@ export default function CampaignsPage() {
                 )}
 
                 {/* Stats */}
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-xs text-muted">
+                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 font-mono text-xs text-muted">
                   <span className="font-medium text-foreground">
                     {auto._count.dmLogs} {t("runs")}
                   </span>
@@ -495,7 +506,7 @@ export default function CampaignsPage() {
                     {auto.analytics.topKeywords.map((keyword) => (
                       <span
                         key={keyword.keyword}
-                        className="rounded-md border border-border bg-surface px-2 py-1 text-xs text-muted"
+                        className="rounded-md bg-surface-hover px-2 py-1 font-mono text-xs text-muted"
                       >
                         {keyword.keyword}: {keyword.count}
                       </span>
@@ -522,14 +533,14 @@ export default function CampaignsPage() {
                 <button
                   onClick={() => toggleActive(auto.id, auto.isActive)}
                   className={`
-                    relative w-11 h-6 rounded-full transition-colors
+                    relative w-11 h-6 rounded-full transition-colors duration-(--dur-ui) ease-(--ease-out-quart)
                     ${auto.isActive ? "bg-accent" : "bg-toggle-off"}
                   `}
                 >
                   <span
                     className={`
-                      absolute top-1 w-4 h-4 rounded-full bg-white transition-transform shadow-sm
-                      ${auto.isActive ? "left-6" : "left-1"}
+                      absolute left-1 top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-(--dur-ui) ease-(--ease-out-quart)
+                      ${auto.isActive ? "translate-x-5" : "translate-x-0"}
                     `}
                   />
                 </button>
@@ -541,7 +552,7 @@ export default function CampaignsPage() {
                       setMenuOpenId((cur) => (cur === auto.id ? null : auto.id))
                     }
                     aria-label={t("More actions")}
-                    className="px-2 py-1 rounded text-lg leading-none text-muted hover:text-foreground"
+                    className="px-2 py-1 rounded-lg text-lg leading-none text-muted hover:text-foreground"
                   >
                     ⋯
                   </button>

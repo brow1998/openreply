@@ -10,6 +10,7 @@ import { useI18n } from "@/lib/i18n/provider";
 import { useEffect, useState } from "react";
 import AccountSelect, { type AccountOption } from "@/components/account-select";
 import StatCard from "@/components/stat-card";
+import { Hash, MousePointerClick, Percent, Send, SkipForward, TriangleAlert, Zap } from "lucide-react";
 import StatusBadge from "@/components/status-badge";
 
 interface DashboardStats {
@@ -72,10 +73,9 @@ export default function DashboardPage() {
       <div className="space-y-6">
         <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="panel rounded p-5 h-32">
-              <div className="w-10 h-10 rounded bg-surface-hover" />
-              <div className="mt-4 h-6 w-16 bg-surface-hover rounded" />
-              <div className="mt-2 h-4 w-24 bg-surface-hover/60 rounded" />
+            <div key={i} className="panel h-[5.5rem] animate-pulse p-4">
+              <div className="h-3 w-20 rounded bg-surface-hover" />
+              <div className="mt-3 h-6 w-14 rounded bg-surface-hover" />
             </div>
           ))}
         </div>
@@ -92,7 +92,7 @@ export default function DashboardPage() {
       {/* Greeting header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
             {t("Hello, {name}!", { name: stats?.userName ?? t("there") })}
           </h1>
           <p className="mt-1 text-sm text-muted">
@@ -117,35 +117,36 @@ export default function DashboardPage() {
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
         <StatCard
+          icon={Zap}
           label={t("Active Campaigns")}
           value={stats?.activeAutomations ?? 0}
         />
-        <StatCard label={t("DMs Sent")} value={stats?.dmsSentMonth ?? 0} />
-        <StatCard label={t("Skipped")} value={stats?.dmsSkippedMonth ?? 0} />
-        <StatCard label={t("Failed")} value={stats?.dmsFailedMonth ?? 0} />
-        <StatCard label={t("Clicks")} value={stats?.clicksThisMonth ?? 0} />
-        <StatCard label={t("CTR")} value={`${stats?.ctrThisMonth ?? 0}%`} />
+        <StatCard icon={Send} label={t("DMs Sent")} value={stats?.dmsSentMonth ?? 0} />
+        <StatCard icon={SkipForward} label={t("Skipped")} value={stats?.dmsSkippedMonth ?? 0} />
+        <StatCard icon={TriangleAlert} label={t("Failed")} value={stats?.dmsFailedMonth ?? 0} />
+        <StatCard icon={MousePointerClick} label={t("Clicks")} value={stats?.clicksThisMonth ?? 0} />
+        <StatCard icon={Percent} label={t("CTR")} value={`${stats?.ctrThisMonth ?? 0}%`} />
       </div>
 
       {/* Chart + Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 sm:gap-6">
         {/* 7-Day Chart */}
-        <div className="lg:col-span-3 panel rounded p-4 sm:p-6">
+        <div className="lg:col-span-3 panel p-4 sm:p-6">
           <h2 className="text-sm font-semibold text-foreground mb-6">{t("DMs — Last 7 Days")}</h2>
           <div className="flex items-end gap-1.5 h-40 sm:gap-2">
             {stats?.dailyDMs.map((day) => (
               <div key={label(day.date)} className="min-w-0 flex-1 h-full flex flex-col items-center gap-2">
-                <span className="text-xs text-muted font-medium">{day.count}</span>
+                <span className="font-mono text-xs font-medium tabular-nums text-muted">{day.count}</span>
                 {/* A percentage height needs a parent with a definite height, so
                     the bar sits in a wrapper that fills the column's free space. */}
                 <div className="w-full min-h-0 flex-1 flex items-end">
                   <div
-                    className="w-full rounded-sm bg-accent min-h-[4px]"
+                    className="w-full rounded-t-md bg-accent min-h-[4px]"
                     style={{ height: `${Math.max((day.count / maxDM) * 100, 4)}%` }}
                   />
                 </div>
                 {/* Seven labels share a phone's width, so they must not wrap. */}
-                <span className="w-full truncate text-center text-[10px] text-muted">
+                <span className="w-full truncate text-center font-mono text-[10px] text-muted">
                   {label(day.date)}
                 </span>
               </div>
@@ -154,34 +155,41 @@ export default function DashboardPage() {
         </div>
 
         {/* Top Keywords */}
-        <div className="lg:col-span-1 panel rounded p-4 sm:p-6">
+        <div className="lg:col-span-1 panel p-4 sm:p-6">
           <h2 className="text-sm font-semibold text-foreground mb-4">{t("Top Keywords")}</h2>
           <div className="space-y-3">
             {stats?.topKeywords.length === 0 && (
-              <p className="text-sm text-muted py-8">{t("No keyword matches yet")}</p>
+              <div className="py-6 text-sm">
+                <Hash size={18} strokeWidth={1.75} className="text-muted" aria-hidden="true" />
+                <p className="mt-2 text-foreground">{t("No keyword matches yet")}</p>
+                <p className="mt-1 text-xs text-muted">{t("When someone comments a campaign keyword, it shows up here.")}</p>
+              </div>
             )}
             {stats?.topKeywords.map((keyword) => (
               <div key={keyword.keyword} className="flex items-center justify-between gap-3">
                 <span className="truncate text-sm font-medium text-foreground">
                   {keyword.keyword}
                 </span>
-                <span className="text-xs text-muted">{keyword.count}</span>
+                <span className="font-mono text-xs tabular-nums text-muted">{keyword.count}</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* Recent Activity */}
-        <div className="lg:col-span-2 panel rounded p-4 sm:p-6">
+        <div className="lg:col-span-2 panel p-4 sm:p-6">
           <h2 className="text-sm font-semibold text-foreground mb-4">{t("Recent Activity")}</h2>
           <div className="space-y-3 max-h-60 overflow-y-auto">
             {stats?.recentLogs.length === 0 && (
-              <p className="text-sm text-muted text-center py-8">{t("No activity yet")}</p>
+              <div className="py-6 text-center text-sm">
+                <p className="text-foreground">{t("No activity yet")}</p>
+                <p className="mt-1 text-xs text-muted">{t("Every DM your campaigns send, skip or fail is listed here.")}</p>
+              </div>
             )}
             {stats?.recentLogs.map((log) => (
               <div
                 key={log.id}
-                className="flex items-center justify-between gap-3 py-2 border-b border-border last:border-0"
+                className="flex min-h-12 items-center justify-between gap-3 border-b border-border py-2 last:border-0"
               >
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-foreground truncate">

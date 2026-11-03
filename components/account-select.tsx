@@ -27,14 +27,15 @@ export default function AccountSelect({
 }: AccountSelectProps) {
   const { t } = useI18n();
   return (
-    <label className="flex flex-col gap-2 text-sm">
-      <span className="text-xs font-semibold uppercase tracking-wide text-muted">
+    // The label stays for screen readers; visually the @handle options already say what this is.
+    <label className="flex flex-col text-sm">
+      <span className="sr-only">
         {label ?? t("Instagram account")}
       </span>
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="min-w-52 rounded-xl border border-border bg-surface px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-accent/40"
+        className="min-w-48 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground outline-none transition-colors duration-(--dur-ui) ease-(--ease-out-quart) hover:border-border-hover focus:border-accent/50"
       >
         {includeAll && <option value="all">{t("All accounts")}</option>}
         {accounts.map((account) => (

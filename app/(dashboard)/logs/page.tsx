@@ -109,11 +109,11 @@ export default function LogsPage() {
               key={status}
               onClick={() => handleFilterChange(status)}
               className={`
-                px-3 py-1.5 rounded-lg text-xs font-medium transition-all
+                rounded-full border px-3 py-1.5 text-xs font-medium transition-colors duration-(--dur-ui) ease-(--ease-out-quart)
                 ${
                   statusFilter === status
-                    ? "bg-accent/15 text-accent border border-accent/20"
-                    : "bg-surface text-muted border border-border hover:border-border-hover hover:text-foreground"
+                    ? "border-accent/50 bg-accent/10 text-accent"
+                    : "border-border text-muted hover:text-foreground"
                 }
               `}
             >
@@ -131,19 +131,19 @@ export default function LogsPage() {
       </div>
 
       {/* Table */}
-      <div className="panel rounded overflow-hidden">
+      <div className="panel overflow-hidden">
         {/* Six columns don't fit a phone; the table keeps its width and scrolls
             horizontally inside the panel rather than crushing every cell. */}
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] text-sm">
             <thead>
               <tr className="border-b border-border text-left">
-                <th className="px-4 py-4 text-xs font-semibold text-muted uppercase tracking-wider sm:px-6">{t("Commenter")}</th>
-                <th className="px-4 py-4 text-xs font-semibold text-muted uppercase tracking-wider sm:px-6">{t("Comment")}</th>
-                <th className="px-4 py-4 text-xs font-semibold text-muted uppercase tracking-wider sm:px-6">{t("Campaign")}</th>
-                <th className="px-4 py-4 text-xs font-semibold text-muted uppercase tracking-wider sm:px-6">{t("Account")}</th>
-                <th className="px-4 py-4 text-xs font-semibold text-muted uppercase tracking-wider sm:px-6">{t("Status")}</th>
-                <th className="px-4 py-4 text-xs font-semibold text-muted uppercase tracking-wider sm:px-6">{t("Time")}</th>
+                <th className="px-4 py-3 text-xs font-medium text-muted sm:px-6">{t("Commenter")}</th>
+                <th className="px-4 py-3 text-xs font-medium text-muted sm:px-6">{t("Comment")}</th>
+                <th className="px-4 py-3 text-xs font-medium text-muted sm:px-6">{t("Campaign")}</th>
+                <th className="px-4 py-3 text-xs font-medium text-muted sm:px-6">{t("Account")}</th>
+                <th className="px-4 py-3 text-xs font-medium text-muted sm:px-6">{t("Status")}</th>
+                <th className="px-4 py-3 text-xs font-medium text-muted sm:px-6">{t("Time")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -151,8 +151,8 @@ export default function LogsPage() {
                 <>
                   {[...Array(5)].map((_, i) => (
                     <tr key={i}>
-                      <td colSpan={6} className="px-4 py-4 sm:px-6">
-                        <div className="h-4 bg-surface-hover rounded" />
+                      <td colSpan={6} className="h-12 px-4 sm:px-6">
+                        <div className="h-4 animate-pulse rounded bg-surface-hover" />
                       </td>
                     </tr>
                   ))}
@@ -160,32 +160,33 @@ export default function LogsPage() {
               )}
               {!loading && logs.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-muted sm:px-6">
-                    {t("No logs found")}
+                  <td colSpan={6} className="px-4 py-12 text-center sm:px-6">
+                    <p className="text-foreground">{t("No logs found")}</p>
+                    <p className="mt-1 text-xs text-muted">{t("Every DM your campaigns send, skip or fail is listed here.")}</p>
                   </td>
                 </tr>
               )}
               {!loading &&
                 logs.map((log) => (
-                  <tr key={log.id} className="hover:bg-surface-hover/50 transition-colors">
-                    <td className="px-4 py-4 sm:px-6">
+                  <tr key={log.id} className="h-12 transition-colors duration-(--dur-ui) ease-(--ease-out-quart) hover:bg-surface-hover/50">
+                    <td className="px-4 py-2.5 sm:px-6">
                       <span className="font-medium text-foreground">
                         @{log.commenterName ?? log.commenterId.slice(0, 8)}
                       </span>
                     </td>
-                    <td className="px-4 py-4 max-w-[200px] sm:px-6">
+                    <td className="max-w-[200px] px-4 py-2.5 sm:px-6">
                       <span className="text-muted truncate block">{log.commentText}</span>
                     </td>
-                    <td className="px-4 py-4 sm:px-6">
+                    <td className="px-4 py-2.5 sm:px-6">
                       <span className="text-muted">{log.automation.name}</span>
                     </td>
-                    <td className="px-4 py-4 sm:px-6">
+                    <td className="px-4 py-2.5 sm:px-6">
                       <span className="text-muted">@{log.instagramAccount.username}</span>
                     </td>
-                    <td className="px-4 py-4 sm:px-6">
+                    <td className="px-4 py-2.5 sm:px-6">
                       <StatusBadge status={log.status} />
                     </td>
-                    <td className="px-4 py-4 text-muted whitespace-nowrap sm:px-6">
+                    <td className="whitespace-nowrap px-4 py-2.5 font-mono text-xs text-muted sm:px-6">
                       {new Date(log.createdAt).toLocaleString(locale, {
                         month: "short",
                         day: "numeric",
@@ -216,11 +217,11 @@ export default function LogsPage() {
                   setLoading(true);
                   setPage(page - 1);
                 }}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted border border-border hover:text-foreground hover:border-border-hover transition-all disabled:opacity-30 disabled:pointer-events-none"
+                className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted border border-border hover:text-foreground hover:border-border-hover transition-colors disabled:opacity-30 disabled:pointer-events-none"
               >
                 {t("Previous")}
               </button>
-              <span className="text-xs text-muted px-2">
+              <span className="px-2 font-mono text-xs text-muted">
                 {page} / {pagination.totalPages}
               </span>
               <button
@@ -229,7 +230,7 @@ export default function LogsPage() {
                   setLoading(true);
                   setPage(page + 1);
                 }}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted border border-border hover:text-foreground hover:border-border-hover transition-all disabled:opacity-30 disabled:pointer-events-none"
+                className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted border border-border hover:text-foreground hover:border-border-hover transition-colors disabled:opacity-30 disabled:pointer-events-none"
               >
                 {t("Next")}
               </button>
