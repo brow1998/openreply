@@ -3,25 +3,60 @@
 /* ManyChat Alternative — Design System
    Plain and functional. No gradients, glass, glow, or animation. */
 
-@theme inline {
-  --color-background: #ffffff;
-  --color-foreground: #18181b;
-  --color-surface: #f7f7f8;
-  --color-surface-hover: #efeff1;
-  --color-border: #e4e4e7;
-  --color-border-hover: #d4d4d8;
-  --color-muted: #71717a;
-  --color-accent: #f97316;
-  --color-accent-hover: #ea580c;
-  --color-success: #16a34a;
-  --color-error: #dc2626;
-  --color-warning: #d97706;
-  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: ui-monospace, monospace;
+/* Theme tokens live in plain CSS variables so the dark palette can override
+   them; @theme inline then points the Tailwind colors at the variables.
+   Dark is chosen by html[data-theme="dark"], set before first paint by the
+   script in app/layout.tsx (saved choice, else the system preference). */
+:root {
+  --c-background: #ffffff;
+  --c-foreground: #18181b;
+  --c-surface: #f7f7f8;
+  --c-surface-hover: #efeff1;
+  --c-border: #e4e4e7;
+  --c-border-hover: #d4d4d8;
+  --c-muted: #71717a;
+  --c-accent: #f97316;
+  --c-accent-hover: #ea580c;
+  --c-success: #16a34a;
+  --c-error: #dc2626;
+  --c-warning: #d97706;
+  --c-toggle-off: #d4d4d8;
+  color-scheme: light;
 }
 
-html {
-  color-scheme: light;
+html[data-theme="dark"] {
+  --c-background: #0b0b0d;
+  --c-foreground: #ececef;
+  --c-surface: #141417;
+  --c-surface-hover: #1c1c21;
+  --c-border: #27272c;
+  --c-border-hover: #3a3a42;
+  --c-muted: #9a9aa5;
+  --c-accent: #f97316;
+  --c-accent-hover: #fb923c;
+  --c-success: #22c55e;
+  --c-error: #f87171;
+  --c-warning: #fbbf24;
+  --c-toggle-off: #3a3a42;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-background: var(--c-background);
+  --color-foreground: var(--c-foreground);
+  --color-surface: var(--c-surface);
+  --color-surface-hover: var(--c-surface-hover);
+  --color-border: var(--c-border);
+  --color-border-hover: var(--c-border-hover);
+  --color-muted: var(--c-muted);
+  --color-accent: var(--c-accent);
+  --color-accent-hover: var(--c-accent-hover);
+  --color-success: var(--c-success);
+  --color-error: var(--c-error);
+  --color-warning: var(--c-warning);
+  --color-toggle-off: var(--c-toggle-off);
+  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, monospace;
 }
 
 body {

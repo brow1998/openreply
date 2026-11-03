@@ -9,6 +9,7 @@
 import type { StaticMessageKey } from "@/lib/i18n";
 import { useI18n } from "@/lib/i18n/provider";
 import { usePathname } from "next/navigation";
+import ThemeToggle from "@/components/theme-toggle";
 
 const pageTitles: Record<string, StaticMessageKey> = {
   "/dashboard": "Dashboard",
@@ -64,22 +65,25 @@ export default function TopBar({
         <h1 className="truncate text-base font-semibold sm:text-lg">{t(title)}</h1>
       </div>
 
-      {instagramAccountCount > 0 ? (
-        <p className="shrink-0 truncate text-sm text-muted">
-          {instagramAccountCount > 1
-            ? t("{count} accounts", { count: instagramAccountCount })
-            : `@${instagramUsername}`}
-        </p>
-      ) : (
-        <a
-          href="/api/instagram/connect"
-          className="shrink-0 whitespace-nowrap text-sm font-medium px-3 py-1.5 rounded bg-accent text-white hover:bg-accent-hover"
-        >
-          {/* Full label needs more room than a 360px header has to spare. */}
-          <span className="sm:hidden">{t("Connect")}</span>
-          <span className="hidden sm:inline">{t("Connect Instagram")}</span>
-        </a>
-      )}
+      <div className="flex shrink-0 items-center gap-3">
+        <ThemeToggle />
+        {instagramAccountCount > 0 ? (
+          <p className="shrink-0 truncate text-sm text-muted">
+            {instagramAccountCount > 1
+              ? t("{count} accounts", { count: instagramAccountCount })
+              : `@${instagramUsername}`}
+          </p>
+        ) : (
+          <a
+            href="/api/instagram/connect"
+            className="shrink-0 whitespace-nowrap text-sm font-medium px-3 py-1.5 rounded bg-accent text-white hover:bg-accent-hover"
+          >
+            {/* Full label needs more room than a 360px header has to spare. */}
+            <span className="sm:hidden">{t("Connect")}</span>
+            <span className="hidden sm:inline">{t("Connect Instagram")}</span>
+          </a>
+        )}
+      </div>
     </header>
   );
 }

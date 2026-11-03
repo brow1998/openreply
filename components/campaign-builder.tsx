@@ -119,7 +119,7 @@ function Toggle({
       type="button"
       onClick={onToggle}
       className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-        on ? "bg-accent" : "bg-zinc-300"
+        on ? "bg-accent" : "bg-toggle-off"
       }`}
     >
       <span
