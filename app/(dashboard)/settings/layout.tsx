@@ -18,7 +18,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
 
   return (
     <div className="space-y-6">
-      <nav aria-label={t("Settings")} className="flex gap-1 overflow-x-auto border-b border-border">
+      <nav aria-label={t("Settings")} className="flex gap-1 overflow-x-auto overflow-y-hidden border-b border-border [scrollbar-width:none]">
         {tabs.map(({ label, href, icon: Icon }) => {
           const active = pathname === href;
           return (

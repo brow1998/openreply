@@ -63,6 +63,25 @@ export default function SettingsPage() {
   const [inviteRole, setInviteRole] = useState<"ADMIN" | "MEMBER">("MEMBER");
   const [memberError, setMemberError] = useState<string | null>(null);
 
+  // Photos come from the accounts endpoint (the settings data has none).
+  const [photos, setPhotos] = useState<Record<string, string | null>>({});
+  useEffect(() => {
+    fetch("/api/instagram/accounts")
+      .then((r) => r.json())
+      .then((payload) => {
+        if (!payload.success) return;
+        const next: Record<string, string | null> = {};
+        for (const a of payload.data.instagramAccounts ?? []) next[a.id] = a.profilePictureUrl ?? null;
+        setPhotos(next);
+      })
+      .catch(() => {
+        // Initials stay.
+      });
+  }, []);
+  const canManageMembers =
+    membersData?.currentUserRole === "OWNER" ||
+    membersData?.currentUserRole === "ADMIN";
+
   useEffect(() => {
     Promise.all([
       fetch("/api/dashboard/stats").then((res) => res.json()),
@@ -130,9 +149,6 @@ export default function SettingsPage() {
   }
 
   const accounts = data?.instagramAccounts ?? [];
-  const canManageMembers =
-    membersData?.currentUserRole === "OWNER" ||
-    membersData?.currentUserRole === "ADMIN";
 
   return (
     <div className="max-w-2xl mx-auto space-y-8">
@@ -207,7 +223,7 @@ export default function SettingsPage() {
                 className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="flex min-w-0 items-center gap-3">
-                  <Avatar name={account.username} size={36} />
+                  <Avatar name={account.username} src={photos[account.id]} size={36} />
                   <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-foreground">
                     @{account.username}

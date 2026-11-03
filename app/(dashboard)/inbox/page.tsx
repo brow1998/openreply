@@ -436,10 +436,15 @@ export default function InboxPage() {
                       className={`flex ${m.fromMe ? "justify-end" : "justify-start"}`}
                     >
                       <div
-                        className={`max-w-[75%] rounded-2xl px-3.5 py-2 text-sm ${
-                          m.fromMe
-                            ? "rounded-br-md bg-accent text-accent-foreground"
-                            : "rounded-bl-md border border-border bg-surface text-foreground"
+                        className={`max-w-[75%] text-sm ${
+                          // A forwarded post is its own card: no bubble around it.
+                          !m.text && m.shares.length > 0 && m.attachments.length === 0
+                            ? ""
+                            : `rounded-2xl px-3.5 py-2 ${
+                                m.fromMe
+                                  ? "rounded-br-md bg-accent text-accent-foreground"
+                                  : "rounded-bl-md border border-border bg-surface text-foreground"
+                              }`
                         }`}
                       >
                         <MessageContent message={m} />
