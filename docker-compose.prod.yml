@@ -31,6 +31,8 @@ x-app: &app
     INSTAGRAM_APP_ID: ${INSTAGRAM_APP_ID:-}
     INSTAGRAM_APP_SECRET: ${INSTAGRAM_APP_SECRET:-}
     FACEBOOK_APP_SECRET: ${FACEBOOK_APP_SECRET:-}
+    # Public id of the Meta app that owns the secret above; used for oEmbed.
+    FACEBOOK_APP_ID: ${FACEBOOK_APP_ID:-3554568898033114}
     WEBHOOK_VERIFY_TOKEN: ${WEBHOOK_VERIFY_TOKEN:?}
     # Optional: GIF search in the composer (free key at developers.giphy.com).
     GIPHY_API_KEY: ${GIPHY_API_KEY:-}

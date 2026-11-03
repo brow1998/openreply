@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useI18n } from "@/lib/i18n/provider";
+import type { InstagramOEmbed } from "@/lib/meta/oembed";
 import type { ThreadMessage } from "@/app/api/instagram/conversations/[id]/route";
 
 /** The shortcode URL Instagram's public embed accepts, e.g. /reel/XYZ/ or /p/XYZ/. */
@@ -14,6 +16,20 @@ function embedUrl(link: string | null): string | null {
   } catch {
     return null;
   }
+}
+
+// One request per link for the whole session; null means oEmbed has nothing (not approved yet, private post).
+const oembedRequests = new Map<string, Promise<InstagramOEmbed | null>>();
+function loadOEmbed(link: string): Promise<InstagramOEmbed | null> {
+  let request = oembedRequests.get(link);
+  if (!request) {
+    request = fetch(`/api/instagram/oembed?url=${encodeURIComponent(link)}`)
+      .then((r) => r.json())
+      .then((payload) => (payload.success ? (payload.data as InstagramOEmbed | null) : null))
+      .catch(() => null);
+    oembedRequests.set(link, request);
+  }
+  return request;
 }
 
 /**
@@ -32,6 +48,40 @@ function ShareCard({
   openLabel: string;
 }) {
   const src = embedUrl(share.link);
+  const [oembed, setOembed] = useState<InstagramOEmbed | null>(null);
+  useEffect(() => {
+    if (!share.link || !src) return;
+    let alive = true;
+    void loadOEmbed(share.link).then((data) => {
+      if (alive) setOembed(data);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [share.link, src]);
+
+  // Meta oEmbed gave us author, caption and cover: draw our own card in the app's look.
+  if (oembed?.thumbnailUrl) {
+    return (
+      <a
+        href={share.link ?? undefined}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block w-[min(100%,20rem)] overflow-hidden rounded-xl border border-border bg-background text-foreground"
+      >
+        {oembed.authorName && (
+          <span className="block px-3 py-2 text-xs font-semibold">@{oembed.authorName}</span>
+        )}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={oembed.thumbnailUrl} alt="" loading="lazy" className="aspect-[4/5] w-full object-cover" />
+        <span className="block px-3 py-2 text-xs">
+          {oembed.title && <span className="line-clamp-3 text-muted">{oembed.title}</span>}
+          <span className="mt-1 block font-medium text-accent">{openLabel}</span>
+        </span>
+      </a>
+    );
+  }
+
   if (!src) {
     return (
       <a

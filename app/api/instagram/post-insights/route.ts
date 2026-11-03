@@ -29,7 +29,6 @@ export async function GET(request: NextRequest) {
   if (!mediaId) {
     return NextResponse.json({ success: false, error: "A post is required." }, { status: 400 });
   }
-  const videoLike = ["REEL", "VIDEO"].includes(params.get("mediaType") ?? "");
 
   const account = await getWorkspaceInstagramAccount(workspaceId, params.get("instagramAccountId"));
   if (!account) {
@@ -40,12 +39,11 @@ export async function GET(request: NextRequest) {
   }
 
   const context = await createInstagramContext(account);
-  const attempts = videoLike
-    ? [
-        ["views", "reach", "saved", "shares", "total_interactions"],
-        ["reach", "saved", "shares", "total_interactions"],
-      ]
-    : [["reach", "saved", "shares", "total_interactions"]];
+  // `views` now exists for feed posts too; older accounts reject it, so retry without.
+  const attempts = [
+    ["views", "reach", "saved", "shares", "total_interactions"],
+    ["reach", "saved", "shares", "total_interactions"],
+  ];
 
   // Metric validity varies by media type and account, so fall back to the
   // smaller set instead of failing the whole panel.

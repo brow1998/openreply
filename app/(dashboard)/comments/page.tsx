@@ -19,6 +19,7 @@ import {
   Clapperboard,
   ExternalLink,
   Eye,
+  Play,
   Heart,
   Layers,
   LayoutGrid,
@@ -32,6 +33,7 @@ import AccountSelect, { type AccountOption } from "@/components/account-select";
 import Avatar, { useInstagramProfiles } from "@/components/avatar";
 import GifPicker from "@/components/gif-picker";
 import type { PostInsightsResponse } from "@/app/api/instagram/post-insights/route";
+import type { PostViewsResponse } from "@/app/api/instagram/post-views/route";
 import type {
   CommentPost,
   CommentThread,
@@ -41,6 +43,8 @@ const POLL_MS = 30_000;
 
 type ReplyMode = "public" | "private";
 type View = "grid" | "list";
+// Instagram crops the profile grid to 3:4; the Reels tab keeps the full 9:16 cover.
+type Format = "feed" | "reels";
 
 function formatDay(iso: string | null, locale: Locale): string {
   if (!iso) return "";
@@ -131,6 +135,16 @@ export default function CommentsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<View>("grid");
+  const [format, setFormat] = useState<Format>(() => {
+    if (typeof window === "undefined") return "feed";
+    try {
+      return window.localStorage.getItem("openreply-grid-format") === "reels" ? "reels" : "feed";
+    } catch {
+      return "feed";
+    }
+  });
+  const [views, setViews] = useState<Record<string, number | null>>({});
+  const requestedViews = useRef(new Set<string>());
   const [onlyPostsWithPending, setOnlyPostsWithPending] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [onlyPending, setOnlyPending] = useState(true);
@@ -200,6 +214,24 @@ export default function CommentsPage() {
     }, POLL_MS);
     return () => clearInterval(timer);
   }, [selectedAccountId, load]);
+
+  // View counts for the grid tiles, asked once per post.
+  useEffect(() => {
+    if (!selectedAccountId) return;
+    const ids = posts
+      .map((p) => p.id)
+      .filter((id) => !requestedViews.current.has(`${selectedAccountId}:${id}`));
+    if (ids.length === 0) return;
+    ids.forEach((id) => requestedViews.current.add(`${selectedAccountId}:${id}`));
+    fetch(`/api/instagram/post-views?instagramAccountId=${selectedAccountId}&ids=${ids.join(",")}`)
+      .then((r) => r.json())
+      .then((payload: { success: boolean; data?: PostViewsResponse }) => {
+        if (payload.success && payload.data) setViews((prev) => ({ ...prev, ...payload.data!.views }));
+      })
+      .catch(() => {
+        // Counts are decoration; tiles just show likes and comments.
+      });
+  }, [posts, selectedAccountId]);
 
   // Metrics for the open post, fetched once per post. Absent means still loading.
   const requestedInsights = useRef(new Set<string>());
@@ -303,9 +335,10 @@ export default function CommentsPage() {
     }
   }
 
-  const shownPosts = onlyPostsWithPending
+  const shownPosts = (onlyPostsWithPending
     ? posts.filter((p) => pendingCount(p) > 0)
-    : posts;
+    : posts
+  ).filter((p) => format === "feed" || p.mediaType === "REEL");
   // Photos for the open post's commenters. Most never messaged the account, so
   // Instagram refuses them and they keep their initials.
   const commenterProfiles = useInstagramProfiles(
@@ -344,6 +377,30 @@ export default function CommentsPage() {
               includeAll={false}
             />
           )}
+          {view === "grid" && (
+            <div className="flex gap-1 rounded-lg border border-border p-0.5">
+              {(["feed", "reels"] as const).map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  aria-pressed={format === f}
+                  onClick={() => {
+                    setFormat(f);
+                    try {
+                      window.localStorage.setItem("openreply-grid-format", f);
+                    } catch {
+                      // Private mode: the choice lasts until reload.
+                    }
+                  }}
+                  className={`rounded-md px-2.5 py-1 text-xs transition-colors duration-(--dur-ui) ease-(--ease-out-quart) ${
+                    format === f ? "bg-surface-hover text-foreground" : "text-muted hover:text-foreground"
+                  }`}
+                >
+                  {f === "feed" ? t("Feed") : t("Reels")}
+                </button>
+              ))}
+            </div>
+          )}
           <div className="flex gap-1 rounded-lg border border-border p-0.5">
             {([
               ["grid", LayoutGrid, t("Grid view")],
@@ -381,7 +438,7 @@ export default function CommentsPage() {
         <p className="py-10 text-center text-sm text-muted">{t("No posts yet.")}</p>
       ) : view === "grid" ? (
         // Same shape as Instagram's own profile grid: three columns, hairline gaps, 3:4 tiles.
-        <div className="mx-auto grid max-w-[58rem] grid-cols-3 gap-1">
+        <div className={`mx-auto grid gap-1 ${format === "reels" ? "max-w-[64rem] grid-cols-3 sm:grid-cols-4" : "max-w-[52rem] grid-cols-3"}`}>
           {shownPosts.map((p) => {
             const pending = pendingCount(p);
             return (
@@ -390,7 +447,7 @@ export default function CommentsPage() {
                 type="button"
                 onClick={() => openPost(p.id)}
                 aria-label={p.caption || t("Comments")}
-                className="group relative aspect-[3/4] overflow-hidden bg-surface focus-visible:z-10"
+                className={`group relative overflow-hidden bg-surface focus-visible:z-10 ${format === "reels" ? "aspect-[9/16]" : "aspect-[3/4]"}`}
               >
                 <Cover post={p} className="absolute inset-0 h-full w-full" />
                 {p.mediaType === "REEL" && (
@@ -399,14 +456,26 @@ export default function CommentsPage() {
                 {p.mediaType === "CAROUSEL_ALBUM" && (
                   <Layers size={18} strokeWidth={1.75} aria-hidden="true" className="absolute right-2 top-2 text-white drop-shadow" />
                 )}
+                {format === "reels" && views[p.id] != null && (
+                  <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 font-mono text-xs font-medium text-white drop-shadow">
+                    <Play size={12} strokeWidth={2} fill="currentColor" aria-hidden="true" />
+                    {formatCount(views[p.id]!, locale)}
+                  </span>
+                )}
                 {pending > 0 && (
-                  <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 font-mono text-xs font-medium text-accent-foreground">
+                  <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 font-mono text-xs font-medium text-accent-foreground">
                     <MessageCircle size={12} strokeWidth={2} aria-hidden="true" />
                     {pendingLabel(p)}
                   </span>
                 )}
                 {/* As on Instagram: likes and comments appear over the cover on hover. */}
-                <span className="absolute inset-0 flex items-center justify-center gap-5 bg-black/50 font-mono text-sm font-medium text-white opacity-0 transition-opacity duration-(--dur-ui) ease-(--ease-out-quart) group-hover:opacity-100 group-focus-visible:opacity-100">
+                <span className="absolute inset-0 flex items-center justify-center gap-4 bg-black/50 font-mono text-sm font-medium text-white opacity-0 transition-opacity duration-(--dur-ui) ease-(--ease-out-quart) group-hover:opacity-100 group-focus-visible:opacity-100">
+                  {views[p.id] != null && (
+                    <span className="inline-flex items-center gap-1.5">
+                      <Play size={15} strokeWidth={2} fill="currentColor" aria-hidden="true" />
+                      {formatCount(views[p.id]!, locale)}
+                    </span>
+                  )}
                   <span className="inline-flex items-center gap-1.5">
                     <Heart size={16} strokeWidth={2} fill="currentColor" aria-hidden="true" />
                     {formatCount(p.likeCount, locale)}
