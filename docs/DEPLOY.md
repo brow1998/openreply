@@ -11,11 +11,12 @@ Dokploy resource's Environment tab; **the two must be kept in step by hand**.
 
 ## Deploy
 
-A push to `main` does **not** deploy by itself: this resource has no GitHub App
-or webhook. After pushing, trigger the deploy through the Dokploy API
-(`compose.deploy`, with the compose id of the `openreply` project) or the
-**Deploy** button in the panel. The container is rebuilt in about 4 minutes; the
-site is unavailable for a few seconds while `web` is replaced.
+A push to `main` deploys by itself: the repository has a GitHub **push webhook**
+that calls the Dokploy compose deploy URL (set up on 2026-11-03; see the repo's
+Settings > Webhooks). The container is rebuilt in about 4 minutes and the site is
+unavailable for a few seconds while `web` is replaced. To deploy without a push
+(for example after changing the Environment tab), use the **Deploy** button in
+the panel or the `compose.deploy` API call.
 
 `web` runs `prisma migrate deploy` before it starts, so a migration ships with
 the code. Write migrations additive (new table or nullable column), because they
