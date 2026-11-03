@@ -487,5 +487,16 @@
   "No comments to show.": "Nenhum comentário para mostrar.",
   "Reply publicly": "Responder publicamente",
   "Send as DM": "Enviar por DM",
-  "Write a reply…": "Escreva uma resposta…"
+  "Write a reply…": "Escreva uma resposta…",
+  "Grid view": "Visão em grade",
+  "List view": "Visão em lista",
+  "All posts": "Todos os posts",
+  "Unavailable message": "Mensagem indisponível",
+  "GIF": "GIF",
+  "Search GIFs": "Buscar GIFs",
+  "Paste a GIF link (https)": "Cole o link de um GIF (https)",
+  "Send GIF": "Enviar GIF",
+  "No GIFs found.": "Nenhum GIF encontrado.",
+  "Add a Giphy key to search GIFs. You can still paste a link.": "Adicione uma chave do Giphy para buscar GIFs. Você ainda pode colar um link.",
+  "GIFs go out as a DM, not as a public reply.": "GIFs saem por DM, não como resposta pública."
 }

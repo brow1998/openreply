@@ -270,3 +270,41 @@ export async function sendCommentReply({
   if (!result?.data?.commentId) throw new ZernioDeliveryUnconfirmedError();
   return { id: result.data.commentId };
 }
+
+/** Instagram only accepts media by public https URL. */
+export function isHttpsUrl(value: string): boolean {
+  try {
+    return new URL(value).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+export class GifUnavailableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "GifUnavailableError";
+  }
+}
+
+/** A GIF (or image) in a DM, or as a private reply when `commentId` is given. Direct Meta only. */
+export async function sendGif({
+  context,
+  instagramAccountId,
+  userId,
+  commentId,
+  url,
+}: {
+  context: InstagramContext;
+  instagramAccountId: string;
+  userId?: string;
+  commentId?: string;
+  url: string;
+}) {
+  if (context.provider !== "META")
+    throw new GifUnavailableError("GIFs need a direct Instagram connection.");
+  if (!isHttpsUrl(url)) throw new GifUnavailableError("The GIF link must be https.");
+  const recipient = commentId ? { comment_id: commentId } : userId ? { id: userId } : null;
+  if (!recipient) throw new GifUnavailableError("A recipient is required.");
+  return meta.sendImageMessage(context.accessToken, instagramAccountId, recipient, url);
+}

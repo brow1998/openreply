@@ -309,6 +309,36 @@ export async function getUserFollowStatus(
  * account, which is exactly who arrives on those two paths. null when the
  * handle cannot be read, so the caller falls back as before.
  */
+export interface InstagramProfile {
+  name: string | null;
+  username: string | null;
+  profilePic: string | null;
+}
+
+/** A person who messaged the account: display name, handle and photo. Null when Instagram refuses. */
+export async function getUserProfile(
+  accessToken: string,
+  igsid: string
+): Promise<InstagramProfile | null> {
+  const url = new URL(`${instagramGraphBase()}/${igsid}`);
+  url.searchParams.set("fields", "name,username,profile_pic");
+  try {
+    const response = await fetch(url.toString(), {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return {
+      name: typeof data?.name === "string" && data.name ? data.name : null,
+      username: typeof data?.username === "string" && data.username ? data.username : null,
+      profilePic: typeof data?.profile_pic === "string" && data.profile_pic ? data.profile_pic : null,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function getUserUsername(
   accessToken: string,
   recipientId: string
@@ -406,6 +436,31 @@ export async function sendDirectMessage(
       body: JSON.stringify({
         recipient: { id: userId },
         message: { text: message },
+      }),
+    }
+  );
+
+  return handleResponse(response);
+}
+
+/** An image or GIF by URL, as a direct message (`userId`) or a private reply (`commentId`). */
+export async function sendImageMessage(
+  accessToken: string,
+  instagramAccountId: string,
+  recipient: { id: string } | { comment_id: string },
+  url: string
+): Promise<{ recipient_id: string; message_id: string }> {
+  const response = await fetch(
+    `${instagramGraphBase()}/${instagramAccountId}/messages`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        recipient,
+        message: { attachment: { type: "image", payload: { url } } },
       }),
     }
   );

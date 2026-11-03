@@ -4,6 +4,8 @@ import { getWorkspaceInstagramAccount } from "@/lib/instagram-accounts";
 import {
   getConversations,
   sendDirectMessage,
+  sendGif,
+  GifUnavailableError,
   MetaApiError,
 } from "@/lib/instagram/provider";
 import { createInstagramContext } from "@/lib/instagram/provider";
@@ -113,6 +115,7 @@ export async function POST(request: NextRequest) {
     instagramAccountId?: string;
     recipientId?: string;
     text?: string;
+    gifUrl?: string;
   };
   try {
     body = await request.json();
@@ -124,7 +127,8 @@ export async function POST(request: NextRequest) {
   }
 
   const text = body.text?.trim();
-  if (!body.recipientId || !text) {
+  const gifUrl = body.gifUrl?.trim();
+  if (!body.recipientId || (!text && !gifUrl)) {
     return NextResponse.json(
       { success: false, error: "A recipient and message are required." },
       { status: 400 }
@@ -144,15 +148,25 @@ export async function POST(request: NextRequest) {
 
   try {
     const accessToken = await createInstagramContext(account);
-    const result = await sendDirectMessage({
-      context: accessToken,
-      instagramAccountId: account.instagramId,
-      userId: body.recipientId,
-      message: text,
-    });
+    const result = gifUrl
+      ? await sendGif({
+          context: accessToken,
+          instagramAccountId: account.instagramId,
+          userId: body.recipientId,
+          url: gifUrl,
+        })
+      : await sendDirectMessage({
+          context: accessToken,
+          instagramAccountId: account.instagramId,
+          userId: body.recipientId,
+          message: text!,
+        });
     return NextResponse.json({ success: true, data: result });
   } catch (err) {
     console.error("[Conversations] Send error:", err);
+    if (err instanceof GifUnavailableError) {
+      return NextResponse.json({ success: false, error: err.message }, { status: 400 });
+    }
     // Surface Meta's own message — the common case is the 24-hour messaging
     // window having closed, which the user needs to see explicitly.
     const message =

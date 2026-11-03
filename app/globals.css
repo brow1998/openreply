@@ -1,43 +1,48 @@
 @import "tailwindcss";
 
-/* ManyChat Alternative — Design System
-   Plain and functional. No gradients, glass, glow, or animation. */
+/* OpenReply design system — the Watchfolio language: dark-first, one gold
+   accent, art-led. No decorative gradients or glow; motion only conveys state. */
 
 /* Theme tokens live in plain CSS variables so the dark palette can override
    them; @theme inline then points the Tailwind colors at the variables.
    Dark is chosen by html[data-theme="dark"], set before first paint by the
    script in app/layout.tsx (saved choice, else the system preference). */
 :root {
-  --c-background: #ffffff;
-  --c-foreground: #18181b;
-  --c-surface: #f7f7f8;
-  --c-surface-hover: #efeff1;
-  --c-border: #e4e4e7;
-  --c-border-hover: #d4d4d8;
-  --c-muted: #71717a;
-  --c-accent: #f97316;
-  --c-accent-hover: #ea580c;
-  --c-success: #16a34a;
-  --c-error: #dc2626;
-  --c-warning: #d97706;
-  --c-toggle-off: #d4d4d8;
+  /* Light is secondary: warm off-white, darker gold (4.5:1 with its text). */
+  --c-background: oklch(0.985 0.004 90);
+  --c-foreground: oklch(0.205 0.01 260);
+  --c-surface: oklch(1 0 0);
+  --c-surface-hover: oklch(0.955 0.005 90);
+  --c-border: oklch(0.145 0 0 / 10%);
+  --c-border-hover: oklch(0.145 0 0 / 20%);
+  --c-muted: oklch(0.47 0.01 260);
+  --c-accent: oklch(0.56 0.13 66);
+  --c-accent-hover: oklch(0.5 0.13 66);
+  --c-accent-foreground: oklch(0.99 0.01 90);
+  --c-success: oklch(0.5 0.12 155);
+  --c-error: oklch(0.55 0.2 25);
+  --c-warning: oklch(0.55 0.13 70);
+  --c-toggle-off: oklch(0.145 0 0 / 22%);
   color-scheme: light;
 }
 
+/* Dark is the default: cold near-black base, one gold accent, and the post
+   art does the coloring. Same system as Watchfolio (see its DESIGN.md). */
 html[data-theme="dark"] {
-  --c-background: #0b0b0d;
-  --c-foreground: #ececef;
-  --c-surface: #141417;
-  --c-surface-hover: #1c1c21;
-  --c-border: #27272c;
-  --c-border-hover: #3a3a42;
-  --c-muted: #9a9aa5;
-  --c-accent: #f97316;
-  --c-accent-hover: #fb923c;
-  --c-success: #22c55e;
-  --c-error: #f87171;
-  --c-warning: #fbbf24;
-  --c-toggle-off: #3a3a42;
+  --c-background: oklch(0.16 0.008 260);
+  --c-foreground: oklch(0.965 0.004 260);
+  --c-surface: oklch(0.205 0.01 260);
+  --c-surface-hover: oklch(0.255 0.012 260);
+  --c-border: oklch(1 0 0 / 9%);
+  --c-border-hover: oklch(1 0 0 / 18%);
+  --c-muted: oklch(0.735 0.01 260);
+  --c-accent: oklch(0.8 0.128 78);
+  --c-accent-hover: oklch(0.85 0.128 78);
+  --c-accent-foreground: oklch(0.2 0.03 78);
+  --c-success: oklch(0.72 0.1 155);
+  --c-error: oklch(0.7 0.17 25);
+  --c-warning: oklch(0.78 0.13 70);
+  --c-toggle-off: oklch(1 0 0 / 20%);
   color-scheme: dark;
 }
 
@@ -51,12 +56,14 @@ html[data-theme="dark"] {
   --color-muted: var(--c-muted);
   --color-accent: var(--c-accent);
   --color-accent-hover: var(--c-accent-hover);
+  --color-accent-foreground: var(--c-accent-foreground);
   --color-success: var(--c-success);
   --color-error: var(--c-error);
   --color-warning: var(--c-warning);
   --color-toggle-off: var(--c-toggle-off);
-  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: ui-monospace, monospace;
+  --font-sans: var(--font-hanken), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: var(--font-space-grotesk), var(--font-hanken), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
 body {
@@ -94,6 +101,7 @@ select:focus-visible {
 .panel {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
+  border-radius: 0.875rem;
 }
 
 /* Kept as no-op aliases so existing markup degrades to plain surfaces
@@ -141,3 +149,18 @@ select:focus-visible {
   font-display: swap;
 }
 .zernio-sponsor { font-family: 'Zernio Geist', sans-serif; }
+
+
+/* Motion tokens (Watchfolio): state changes 160-200ms, never layout props. */
+:root {
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+  --dur-ui: 200ms;
+}
+
+/* Post covers and avatars: art lifts a little on hover, presses on click. */
+.cover-tile {
+  transition: transform var(--dur-ui) var(--ease-out-quart), border-color var(--dur-ui) var(--ease-out-quart);
+}
+.cover-tile:hover { transform: translateY(-2px); }
+.cover-tile:active { transform: scale(0.98); }

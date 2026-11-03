@@ -32,6 +32,8 @@ x-app: &app
     INSTAGRAM_APP_SECRET: ${INSTAGRAM_APP_SECRET:-}
     FACEBOOK_APP_SECRET: ${FACEBOOK_APP_SECRET:-}
     WEBHOOK_VERIFY_TOKEN: ${WEBHOOK_VERIFY_TOKEN:?}
+    # Optional: GIF search in the composer (free key at developers.giphy.com).
+    GIPHY_API_KEY: ${GIPHY_API_KEY:-}
   depends_on:
     postgres:
       condition: service_healthy

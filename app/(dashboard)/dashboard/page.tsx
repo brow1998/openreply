@@ -145,7 +145,7 @@ export default function DashboardPage() {
                   />
                 </div>
                 {/* Seven labels share a phone's width, so they must not wrap. */}
-                <span className="w-full truncate text-center text-[10px] text-zinc-500">
+                <span className="w-full truncate text-center text-[10px] text-muted">
                   {label(day.date)}
                 </span>
               </div>

@@ -18,6 +18,10 @@ import { readCache, writeCache } from "@/lib/client-cache";
 import type { ConversationListItem } from "@/app/api/instagram/conversations/route";
 import type { ThreadMessage } from "@/app/api/instagram/conversations/[id]/route";
 import MessageContent from "@/components/message-content";
+import Avatar from "@/components/avatar";
+import GifPicker from "@/components/gif-picker";
+import { ImagePlay } from "lucide-react";
+import type { InstagramProfile } from "@/lib/meta/client";
 
 const POLL_MS = 12_000;
 // Cached list/threads are shown instantly on revisit, then revalidated in the
@@ -60,11 +64,38 @@ export default function InboxPage() {
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [gifOpen, setGifOpen] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const conversationRequests = useRef(new Set<string>());
 
   const active = conversations.find((c) => c.id === activeId) ?? null;
+
+  // Photos and names, loaded after the list so the list itself never waits on them.
+  const [profiles, setProfiles] = useState<Record<string, InstagramProfile>>({});
+  const requestedProfiles = useRef(new Set<string>());
+  useEffect(() => {
+    if (!selectedAccountId) return;
+    const ids = conversations
+      .map((c) => c.contact.id)
+      .filter((id) => id && !requestedProfiles.current.has(`${selectedAccountId}:${id}`));
+    if (ids.length === 0) return;
+    ids.forEach((id) => requestedProfiles.current.add(`${selectedAccountId}:${id}`));
+    fetch(
+      `/api/instagram/profiles?instagramAccountId=${selectedAccountId}&ids=${ids.join(",")}`
+    )
+      .then((r) => r.json())
+      .then((payload) => {
+        if (payload.success) setProfiles((prev) => ({ ...prev, ...payload.data.profiles }));
+      })
+      .catch(() => {
+        // Photos are decoration: initials stay if this fails.
+        ids.forEach((id) => requestedProfiles.current.delete(`${selectedAccountId}:${id}`));
+      });
+  }, [conversations, selectedAccountId]);
+
+  const displayName = (c: ConversationListItem) =>
+    profiles[c.contact.id]?.name ?? (c.contact.username ? `@${c.contact.username}` : "unknown");
 
   // Accounts for the selector; default to the first connected account. Uses the
   // lightweight accounts endpoint (one query) rather than the heavy dashboard
@@ -219,7 +250,7 @@ export default function InboxPage() {
 
     // Optimistically show the reply immediately, then confirm with the server.
     const optimistic: ThreadMessage = {
-      id: `optimistic-${Date.now()}`,
+      id: `optimistic-${crypto.randomUUID()}`,
       text,
       fromMe: true,
       fromUsername: null,
@@ -261,6 +292,35 @@ export default function InboxPage() {
     }
   }
 
+  async function handleSendGif(url: string) {
+    if (!active?.contact.id || sending) return;
+    setSending(true);
+    setSendError(null);
+    try {
+      const res = await fetch("/api/instagram/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          instagramAccountId: selectedAccountId,
+          recipientId: active.contact.id,
+          gifUrl: url,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setGifOpen(false);
+        await loadMessages(active.id, true);
+        void loadConversations(true);
+      } else {
+        setSendError(data.error ?? t("Failed to send message"));
+      }
+    } catch {
+      setSendError(t("Failed to send message"));
+    } finally {
+      setSending(false);
+    }
+  }
+
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -271,7 +331,7 @@ export default function InboxPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-end justify-between gap-4">
-        <h1 className="text-lg font-semibold text-foreground">{t("Inbox")}</h1>
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">{t("Inbox")}</h1>
         {accounts.length > 1 && (
           <AccountSelect
             accounts={accounts}
@@ -282,7 +342,7 @@ export default function InboxPage() {
         )}
       </div>
 
-      <div className="grid h-[calc(100dvh-11rem)] grid-cols-1 overflow-hidden rounded border border-border sm:grid-cols-[300px_1fr]">
+      <div className="grid h-[calc(100dvh-11rem)] grid-cols-1 overflow-hidden rounded-xl border border-border sm:grid-cols-[320px_minmax(0,1fr)]">
         {/* Conversation list. On mobile it takes the full pane and is hidden
             once a thread is open (ManyChat-style); on sm+ it is always shown. */}
         <div
@@ -308,27 +368,34 @@ export default function InboxPage() {
                     key={c.id}
                     type="button"
                     onClick={() => openConversation(c.id)}
-                    className={`block w-full border-b border-border px-4 py-3 text-left ${
+                    className={`flex w-full items-center gap-3 border-b border-border px-4 py-3 text-left transition-colors duration-(--dur-ui) ease-(--ease-out-quart) ${
                       isActive ? "bg-surface-hover" : "hover:bg-surface-hover"
                     }`}
                   >
-                    <div className="flex items-baseline justify-between gap-2">
-                      <span className="truncate text-sm font-medium text-foreground">
-                        {c.detailsUnavailable ? t("Details unavailable") : `@${c.contact.username ?? "unknown"}`}
+                    <Avatar
+                      name={c.contact.username ?? displayName(c)}
+                      src={profiles[c.contact.id]?.profilePic}
+                      size={40}
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-baseline justify-between gap-2">
+                        <span className="truncate text-sm font-medium text-foreground">
+                          {c.detailsUnavailable ? t("Details unavailable") : displayName(c)}
+                        </span>
+                        <span className="shrink-0 font-mono text-[11px] text-muted">
+                          {formatTime(c.updatedTime, locale)}
+                        </span>
                       </span>
-                      <span className="shrink-0 text-[11px] text-zinc-500">
-                        {formatTime(c.updatedTime, locale)}
-                      </span>
-                    </div>
-                    {c.detailsUnavailable && (
-                      <p className="mt-0.5 text-xs text-muted">{t("Instagram could not load this conversation.")}</p>
-                    )}
-                    {c.lastMessage && (
-                      <p className="mt-0.5 truncate text-xs text-muted">
-                        {c.lastMessage.fromMe ? t("You: ") : ""}
-                        {c.lastMessage.text || t("(no text)")}
-                      </p>
-                    )}
+                      {c.detailsUnavailable && (
+                        <span className="mt-0.5 block text-xs text-muted">{t("Instagram could not load this conversation.")}</span>
+                      )}
+                      {c.lastMessage && (
+                        <span className="mt-0.5 block truncate text-xs text-muted">
+                          {c.lastMessage.fromMe ? t("You: ") : ""}
+                          {c.lastMessage.text || t("(no text)")}
+                        </span>
+                      )}
+                    </span>
                   </button>
                 );
               })
@@ -356,8 +423,18 @@ export default function InboxPage() {
                 >
                   {t("Back")}
                 </button>
-                <span className="truncate">
-                  {active.detailsUnavailable ? t("Details unavailable") : `@${active.contact.username ?? "unknown"}`}
+                {!active.detailsUnavailable && (
+                  <Avatar
+                    name={active.contact.username ?? displayName(active)}
+                    src={profiles[active.contact.id]?.profilePic}
+                    size={32}
+                  />
+                )}
+                <span className="min-w-0 truncate">
+                  {active.detailsUnavailable ? t("Details unavailable") : displayName(active)}
+                  {!active.detailsUnavailable && active.contact.username && profiles[active.contact.id]?.name && (
+                    <span className="ml-2 font-normal text-muted">@{active.contact.username}</span>
+                  )}
                 </span>
               </div>
 
@@ -377,16 +454,16 @@ export default function InboxPage() {
                       className={`flex ${m.fromMe ? "justify-end" : "justify-start"}`}
                     >
                       <div
-                        className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
+                        className={`max-w-[75%] rounded-2xl px-3.5 py-2 text-sm ${
                           m.fromMe
-                            ? "bg-accent text-white"
-                            : "bg-surface text-foreground border border-border"
+                            ? "rounded-br-md bg-accent text-accent-foreground"
+                            : "rounded-bl-md border border-border bg-surface text-foreground"
                         }`}
                       >
                         <MessageContent message={m} />
                         <p
-                          className={`mt-1 text-[10px] ${
-                            m.fromMe ? "text-white/70" : "text-zinc-500"
+                          className={`mt-1 font-mono text-[10px] ${
+                            m.fromMe ? "text-accent-foreground/70" : "text-muted"
                           }`}
                         >
                           {formatTime(m.createdTime, locale)}
@@ -401,7 +478,27 @@ export default function InboxPage() {
                 {sendError && (
                   <p className="mb-2 text-xs text-error">{sendError}</p>
                 )}
+                {gifOpen && (
+                  <div className="mb-2">
+                    <GifPicker sending={sending} onSend={(url) => void handleSendGif(url)} />
+                  </div>
+                )}
                 <div className="flex items-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setGifOpen((v) => !v)}
+                    aria-label={t("GIF")}
+                    aria-pressed={gifOpen}
+                    title={t("GIF")}
+                    disabled={active.detailsUnavailable || !active.contact.id}
+                    className={`shrink-0 rounded-lg border p-2.5 transition-colors duration-(--dur-ui) ease-(--ease-out-quart) disabled:opacity-50 ${
+                      gifOpen
+                        ? "border-accent/50 bg-accent/10 text-accent"
+                        : "border-border text-muted hover:text-foreground"
+                    }`}
+                  >
+                    <ImagePlay size={18} strokeWidth={1.75} />
+                  </button>
                   <textarea
                     disabled={active.detailsUnavailable || !active.contact.id}
                     value={draft}
@@ -409,13 +506,13 @@ export default function InboxPage() {
                     onKeyDown={handleKeyDown}
                     rows={1}
                     placeholder={t("Write a reply…  (Enter to send, Shift+Enter for a new line)")}
-                    className="max-h-32 min-h-[40px] flex-1 resize-none rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-zinc-500 focus:border-accent/40 focus:outline-none"
+                    className="max-h-32 min-h-[40px] flex-1 resize-none rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-accent/40 focus:outline-none"
                   />
                   <button
                     type="button"
                     onClick={() => void handleSend()}
                     disabled={sending || !draft.trim() || !active.contact.id || active.detailsUnavailable}
-                    className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
+                    className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:bg-accent-hover disabled:opacity-50"
                   >
                     {sending ? t("Sending…") : t("Send")}
                   </button>

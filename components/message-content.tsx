@@ -3,6 +3,72 @@
 import { useI18n } from "@/lib/i18n/provider";
 import type { ThreadMessage } from "@/app/api/instagram/conversations/[id]/route";
 
+/** The shortcode URL Instagram's public embed accepts, e.g. /reel/XYZ/ or /p/XYZ/. */
+function embedUrl(link: string | null): string | null {
+  if (!link) return null;
+  try {
+    const u = new URL(link);
+    if (!/(^|\.)instagram\.com$/.test(u.hostname)) return null;
+    const m = u.pathname.match(/^\/(?:[^/]+\/)?(reel|reels|p|tv)\/([\w-]+)/);
+    return m ? `https://www.instagram.com/${m[1] === "reels" ? "reel" : m[1]}/${m[2]}/embed/` : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * A forwarded post or reel, drawn the way Instagram draws it in a DM: author,
+ * cover and caption. Instagram's API only hands us the link, so the card is
+ * Instagram's own public embed (no API review needed), cropped to the header
+ * and cover. Anything that is not a post link stays a plain link.
+ */
+function ShareCard({
+  share,
+  fallbackTitle,
+  openLabel,
+}: {
+  share: ThreadMessage["shares"][number];
+  fallbackTitle: string;
+  openLabel: string;
+}) {
+  const src = embedUrl(share.link);
+  if (!src) {
+    return (
+      <a
+        href={share.link ?? undefined}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground underline underline-offset-2"
+      >
+        {share.title || fallbackTitle}
+      </a>
+    );
+  }
+  return (
+    <div className="w-[min(100%,20.5rem)] overflow-hidden rounded-xl border border-border bg-white">
+      {/* The embed is taller than the card: the bottom is the like/comment row, which would not work here. */}
+      <div className="h-[30.5rem] overflow-hidden">
+        <iframe
+          src={src}
+          title={share.title || fallbackTitle}
+          loading="lazy"
+          scrolling="no"
+          sandbox="allow-scripts allow-same-origin allow-popups"
+          className="h-[34rem] w-full border-0"
+        />
+      </div>
+      <a
+        href={share.link ?? undefined}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block border-t border-black/10 bg-white px-3 py-2 text-xs font-medium text-[#3d5afe]"
+      >
+        {openLabel}
+      </a>
+    </div>
+  );
+}
+
 /**
  * The body of one chat bubble: text plus whatever else the message carried
  * (photos, videos, forwarded posts and reels, story mentions and replies).
@@ -36,22 +102,7 @@ export default function MessageContent({ message }: { message: ThreadMessage }) 
       )}
 
       {m.shares.map((s, i) => (
-        <a
-          key={`share-${i}`}
-          href={s.link ?? undefined}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block overflow-hidden rounded border border-border bg-background text-foreground"
-        >
-          {s.imageUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={s.imageUrl} alt="" loading="lazy" className="max-h-60 w-full object-cover" />
-          )}
-          <span className="block px-2 py-1.5 text-xs">
-            <span className="block font-medium">{s.title || t("Shared a post or reel")}</span>
-            {s.description && <span className="line-clamp-3 text-muted">{s.description}</span>}
-          </span>
-        </a>
+        <ShareCard key={`share-${i}`} share={s} fallbackTitle={t("Shared a post or reel")} openLabel={t("Open on Instagram")} />
       ))}
 
       {m.attachments.map((a, i) => {
@@ -84,7 +135,7 @@ export default function MessageContent({ message }: { message: ThreadMessage }) 
       {m.text ? (
         <p className="whitespace-pre-wrap break-words">{m.text}</p>
       ) : !hasExtras ? (
-        <p className="opacity-70">{t("(no text)")}</p>
+        <p className="italic opacity-70">{t("Unavailable message")}</p>
       ) : null}
     </div>
   );

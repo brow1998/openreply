@@ -487,5 +487,16 @@
   "No comments to show.": "沒有可顯示的留言。",
   "Reply publicly": "公開回覆",
   "Send as DM": "以私訊傳送",
-  "Write a reply…": "寫下回覆…"
+  "Write a reply…": "寫下回覆…",
+  "Grid view": "網格檢視",
+  "List view": "清單檢視",
+  "All posts": "所有貼文",
+  "Unavailable message": "訊息無法顯示",
+  "GIF": "GIF",
+  "Search GIFs": "搜尋 GIF",
+  "Paste a GIF link (https)": "貼上 GIF 連結（https）",
+  "Send GIF": "傳送 GIF",
+  "No GIFs found.": "找不到 GIF。",
+  "Add a Giphy key to search GIFs. You can still paste a link.": "新增 Giphy 金鑰即可搜尋 GIF，仍可貼上連結。",
+  "GIFs go out as a DM, not as a public reply.": "GIF 會以私訊傳送，無法公開回覆。"
 }

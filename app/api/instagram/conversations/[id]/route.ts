@@ -52,16 +52,6 @@ export async function GET(request: NextRequest, { params }: RouteProps) {
       conversationId: conversationId,
     });
 
-    // TEMPORARY: log the raw shape of messages we cannot render, to learn what
-    // else Instagram sends (voice notes, GIFs, reactions...). Remove after.
-    raw
-      .filter((m) => {
-        const n = normalizeMessage(m);
-        return !m.message && !n.shares.length && !n.attachments.length && !n.story;
-      })
-      .slice(0, 3)
-      .forEach((m) => console.info("[Conversation Messages] unrendered", JSON.stringify({ ...m, from: undefined, to: undefined })));
-
     // The API returns newest-first; reverse to read top-to-bottom.
     const messages: ThreadMessage[] = raw
       .map((m) => ({

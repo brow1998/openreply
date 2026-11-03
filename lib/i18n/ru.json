@@ -487,5 +487,16 @@
   "No comments to show.": "Нет комментариев для показа.",
   "Reply publicly": "Ответить публично",
   "Send as DM": "Отправить в личные",
-  "Write a reply…": "Напишите ответ…"
+  "Write a reply…": "Напишите ответ…",
+  "Grid view": "Сетка",
+  "List view": "Список",
+  "All posts": "Все публикации",
+  "Unavailable message": "Сообщение недоступно",
+  "GIF": "GIF",
+  "Search GIFs": "Поиск GIF",
+  "Paste a GIF link (https)": "Вставьте ссылку на GIF (https)",
+  "Send GIF": "Отправить GIF",
+  "No GIFs found.": "GIF не найдены.",
+  "Add a Giphy key to search GIFs. You can still paste a link.": "Добавьте ключ Giphy для поиска GIF. Ссылку можно вставить и так.",
+  "GIFs go out as a DM, not as a public reply.": "GIF уходят в личные сообщения, а не публичным ответом."
 }
