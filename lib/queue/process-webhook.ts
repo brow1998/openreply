@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/db/client';
 import { getDMQueue, MESSAGE_JOB_NAME, POSTBACK_JOB_NAME } from '@/lib/queue/client';
-import { parseCommentEvents, parseMessageEvents, parsePostbackEvents, parseReadEvents } from '@/lib/meta/webhook';
+import { parseCommentEvents, parseIncomingSenders, parseMessageEvents, parsePostbackEvents, parseReadEvents } from '@/lib/meta/webhook';
+import { decryptToken } from '@/lib/meta/oauth';
+import { captureContactProfile } from '@/lib/profiles/contact-profile';
 import { Prisma, type InstagramProvider } from '@/app/generated/prisma/client';
 
 const OPENING_DM_READ_FALLBACK_DELAY_MS = 5 * 60 * 1000;
@@ -12,7 +14,7 @@ export async function processInstagramWebhook({ payload: incoming, provider, wor
   if (incoming.object !== 'instagram' || !Array.isArray(incoming.entry)) return;
   const accounts = await prisma.instagramAccount.findMany({
     where: { instagramId: { in: incoming.entry.map(e => e.id) }, provider, ...(workspaceId ? { workspaceId } : {}) },
-    select: { id: true, instagramId: true, workspaceId: true },
+    select: { id: true, instagramId: true, workspaceId: true, accessToken: true },
   });
   const accountMap = new Map(accounts.map(a => [a.instagramId, a]));
   const allowed = new Set(accountMap.keys());
@@ -29,6 +31,18 @@ export async function processInstagramWebhook({ payload: incoming, provider, wor
       status: "PENDING",
     },
   });
+
+  // Keep a copy of who wrote while Instagram still describes them. Not awaited:
+  // the webhook answers Meta first, and a failure here must never fail it.
+  if (provider === 'META') {
+    for (const { instagramAccountId, senderId } of parseIncomingSenders(payload as Parameters<typeof parseIncomingSenders>[0])) {
+      const account = accountMap.get(instagramAccountId);
+      if (!account?.accessToken) continue;
+      void Promise.resolve()
+        .then(() => captureContactProfile({ accountId: account.id, igsid: senderId, accessToken: decryptToken(account.accessToken) }))
+        .catch((error) => console.warn('[Webhook] contact profile capture failed', error instanceof Error ? error.message : error));
+    }
+  }
 
   try {
     const commentEvents = parseCommentEvents(

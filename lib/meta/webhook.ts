@@ -241,6 +241,35 @@ export function parseMessageEvents(
 }
 
 /**
+ * Everyone who wrote to (or tapped a button of) a connected account in this
+ * payload, once each. Used to capture their profile while Instagram still
+ * describes them.
+ */
+export function parseIncomingSenders(
+  payload: WebhookPayload
+): { instagramAccountId: string; senderId: string }[] {
+  const seen = new Set<string>();
+  const senders: { instagramAccountId: string; senderId: string }[] = [];
+  if (payload.object !== "instagram") return senders;
+
+  for (const entry of payload.entry ?? []) {
+    for (const messaging of entry.messaging ?? []) {
+      const message = messaging.message;
+      if (!message && !messaging.postback) continue;
+      if (message?.is_echo || message?.is_deleted) continue;
+      const senderId = messaging.sender?.id;
+      const accountId = entry.id ?? messaging.recipient?.id;
+      if (!senderId || !accountId || senderId === accountId) continue;
+      const key = `${accountId}:${senderId}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      senders.push({ instagramAccountId: accountId, senderId });
+    }
+  }
+  return senders;
+}
+
+/**
  * Parse Instagram DM read receipts. When a user reads an opening DM but does
  * not tap its button, the webhook route uses this to schedule the reveal after
  * a short grace period.

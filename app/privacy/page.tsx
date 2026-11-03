@@ -12,7 +12,7 @@ export default function PrivacyPage() {
     <LegalShell
       title="Privacy Policy"
       description="OpenReply helps businesses send Meta-compliant private replies when people comment on connected Instagram posts or reels."
-      updatedAt="May 24, 2026"
+      updatedAt="November 3, 2026"
     >
       <section>
         <h2 className="text-xl font-bold text-white">Data We Collect</h2>
@@ -21,7 +21,12 @@ export default function PrivacyPage() {
           billing metadata, connected Instagram account identifiers, encrypted
           Instagram access tokens, campaign settings, webhook payloads,
           comments needed to process campaigns, delivery logs, and operational
-          diagnostics.
+          diagnostics. When someone sends a message to a connected account we
+          also keep their name, username, and a small copy of their profile
+          photo as Instagram reports them at that moment, so the account owner
+          can tell who is writing in the inbox. Instagram only describes a
+          person for a few hours after their message, and the photo link
+          expires, which is why the copy is taken when the message arrives.
         </p>
       </section>
 

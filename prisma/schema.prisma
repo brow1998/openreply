@@ -162,6 +162,7 @@ model InstagramAccount {
   dmLogs      DmLog[]
   linkClicks  LinkClick[]
   followerSnapshots FollowerSnapshot[]
+  contactProfiles   ContactProfile[]
 
   @@index([workspaceId])
 }
@@ -436,4 +437,23 @@ model ZernioConnection {
 model PostbackDelivery {
   id String @id
   createdAt DateTime @default(now())
+}
+
+/// Name, handle and a small photo of someone who messaged a connected account,
+/// captured when their message arrives: Instagram only describes a person for a
+/// few hours after they write, and its photo links expire.
+model ContactProfile {
+  id                 String   @id @default(cuid())
+  instagramAccountId String
+  igsid              String
+  name               String?
+  username           String?
+  /// Small JPEG/PNG/WebP as a data URL (Instagram serves 240px, under ~60 KB).
+  photo              String?
+  fetchedAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  account InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([instagramAccountId, igsid])
 }

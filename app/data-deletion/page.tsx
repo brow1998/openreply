@@ -18,8 +18,9 @@ export default function DataDeletionPage() {
         <h2 className="text-xl font-bold text-white">Disconnect Instagram</h2>
         <p className="mt-3">
           Sign in, open Settings, and select Disconnect. This removes the stored
-          Instagram connection token and stops campaigns from sending private
-          replies for that workspace.
+          Instagram connection token, the stored profiles of people who wrote
+          to that account, and stops campaigns from sending private replies for
+          that workspace.
         </p>
       </section>
 

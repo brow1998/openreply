@@ -2,20 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentWorkspaceId } from "@/lib/auth";
 import { getWorkspaceInstagramAccount } from "@/lib/instagram-accounts";
 import { createInstagramContext } from "@/lib/instagram/provider";
-import {
-  createLookupCache,
-  getUserProfile,
-  type InstagramProfile,
-} from "@/lib/meta/client";
+import { prisma } from "@/lib/db/client";
+import { createLookupCache, type InstagramProfile } from "@/lib/meta/client";
+import { captureContactProfile } from "@/lib/profiles/contact-profile";
 
 export interface ProfilesResponse {
   profiles: Record<string, InstagramProfile>;
 }
 
-// Photo links expire after a while, so keep them for hours, not days. A miss is
-// remembered for a few minutes so a person without a photo (or a commenter
-// Instagram will not describe) is not re-requested on every poll.
-const cache = createLookupCache<InstagramProfile>(6 * 60 * 60 * 1000, 10 * 60 * 1000);
+// Stored copies (ContactProfile, filled when a message arrives) are read first.
+// For anyone not stored yet we ask Instagram, which only answers for a few hours
+// after the person wrote; a refusal is remembered for a few minutes so the same
+// person is not re-requested on every poll.
+const misses = createLookupCache<true>(1, 10 * 60 * 1000);
 const MAX_IDS = 40;
 // Instagram-scoped ids are numeric; anything else would be spliced into a Graph path.
 const IGSID = /^\d{1,32}$/;
@@ -61,20 +60,28 @@ export async function GET(request: NextRequest) {
     return done();
   }
 
-  const todo: string[] = [];
-  for (const id of ids) {
-    const hit = cache.get(`${account.id}:${id}`);
-    if (!hit) todo.push(id);
-    else if (hit.value) profiles[id] = hit.value;
+  const stored = await prisma.contactProfile.findMany({
+    where: { instagramAccountId: account.id, igsid: { in: ids } },
+    select: { igsid: true, name: true, username: true, photo: true },
+  });
+  const have = new Set<string>();
+  for (const row of stored) {
+    profiles[row.igsid] = { name: row.name, username: row.username, profilePic: row.photo };
+    if (row.photo) have.add(row.igsid);
   }
+
+  const todo = ids.filter((id) => !have.has(id) && !misses.get(`${account.id}:${id}`));
 
   // Five at a time: polite to Meta, and a full inbox still loads in a few seconds.
   for (let i = 0; i < todo.length; i += 5) {
     await Promise.all(
       todo.slice(i, i + 5).map(async (id) => {
-        const profile = await getUserProfile(accessToken, id);
-        cache.set(`${account.id}:${id}`, profile);
-        if (profile) profiles[id] = profile;
+        const contact = await captureContactProfile({ accountId: account.id, igsid: id, accessToken });
+        if (contact?.photo || contact?.name) {
+          profiles[id] = { name: contact.name, username: contact.username, profilePic: contact.photo };
+        } else {
+          misses.set(`${account.id}:${id}`, null);
+        }
       })
     );
   }
