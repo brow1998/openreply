@@ -39,7 +39,8 @@ export async function GET(request: NextRequest) {
 
   const account = await getWorkspaceInstagramAccount(
     workspaceId,
-    request.nextUrl.searchParams.get("instagramAccountId")
+    request.nextUrl.searchParams.get("instagramAccountId"),
+    "inbox.read"
   );
   if (!account) {
     return NextResponse.json(
@@ -137,7 +138,8 @@ export async function POST(request: NextRequest) {
 
   const account = await getWorkspaceInstagramAccount(
     workspaceId,
-    body.instagramAccountId ?? null
+    body.instagramAccountId ?? null,
+    "inbox.reply"
   );
   if (!account) {
     return NextResponse.json(

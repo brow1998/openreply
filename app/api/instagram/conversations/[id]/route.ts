@@ -36,7 +36,8 @@ export async function GET(request: NextRequest, { params }: RouteProps) {
 
   const account = await getWorkspaceInstagramAccount(
     workspaceId,
-    request.nextUrl.searchParams.get("instagramAccountId")
+    request.nextUrl.searchParams.get("instagramAccountId"),
+    "inbox.read"
   );
   if (!account) {
     return NextResponse.json(

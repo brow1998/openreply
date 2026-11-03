@@ -37,12 +37,15 @@ export function buildDuplicateName(name: string): string {
 export async function duplicateCampaign({
   automationId,
   workspaceId,
+  accountId,
 }: {
   automationId: string;
   workspaceId: string;
+  /** With Pedro sign-in on: the accounts whose campaigns this user may copy. */
+  accountId?: string | { in: string[] };
 }) {
   const source = await prisma.automation.findFirst({
-    where: { id: automationId, workspaceId },
+    where: { id: automationId, workspaceId, ...(accountId !== undefined ? { instagramAccountId: accountId } : {}) },
     include: { trackedLinks: { orderBy: TRACKED_LINK_ORDER } },
   });
 

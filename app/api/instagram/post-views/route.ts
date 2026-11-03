@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
   }
 
   const params = request.nextUrl.searchParams;
-  const account = await getWorkspaceInstagramAccount(workspaceId, params.get("instagramAccountId"));
+  const account = await getWorkspaceInstagramAccount(workspaceId, params.get("instagramAccountId"), "comment.read");
   if (!account) {
     return NextResponse.json(
       { success: false, error: "Instagram account not connected." },

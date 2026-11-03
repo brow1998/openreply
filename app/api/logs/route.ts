@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentWorkspaceId } from "@/lib/auth";
 import { prisma } from "@/lib/db/client";
+import { accountCondition } from "@/lib/access/grants";
+import { accountScope } from "@/lib/access/scope";
 import { DmStatus } from "@/app/generated/prisma/client";
 
 export async function GET(request: NextRequest) {
@@ -19,7 +21,10 @@ export async function GET(request: NextRequest) {
     Math.max(1, Number.parseInt(searchParams.get("limit") ?? "20", 10))
   );
   const status = searchParams.get("status");
-  const instagramAccountId = searchParams.get("instagramAccountId");
+  const instagramAccountId = accountCondition(
+    await accountScope(workspaceId, "any"),
+    searchParams.get("instagramAccountId")
+  );
   const skip = (page - 1) * limit;
   const parsedStatus =
     status && Object.values(DmStatus).includes(status as DmStatus)
@@ -29,9 +34,7 @@ export async function GET(request: NextRequest) {
   const where = {
     workspaceId,
     ...(parsedStatus ? { status: parsedStatus } : {}),
-    ...(instagramAccountId && instagramAccountId !== "all"
-      ? { instagramAccountId }
-      : {}),
+    ...(instagramAccountId !== undefined ? { instagramAccountId } : {}),
   };
 
   const [logs, total] = await Promise.all([

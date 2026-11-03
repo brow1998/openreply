@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/client";
-import {
-  canManageWorkspace,
-  getCurrentWorkspaceContext,
-} from "@/lib/workspace-access";
+import { getCurrentWorkspaceContext } from "@/lib/workspace-access";
+import { accountCondition } from "@/lib/access/grants";
+import { accountScope, canUseSomewhere } from "@/lib/access/scope";
 
 export async function POST(request: NextRequest) {
   const context = await getCurrentWorkspaceContext();
@@ -14,7 +13,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (!canManageWorkspace(context.role)) {
+  if (!(await canUseSomewhere(context, "account.manage"))) {
     return NextResponse.json(
       { success: false, error: "Only owners and admins can disconnect accounts" },
       { status: 403 }
@@ -25,10 +24,15 @@ export async function POST(request: NextRequest) {
   const instagramAccountId =
     typeof body.instagramAccountId === "string" ? body.instagramAccountId : null;
 
+  // With Pedro sign-in on, only accounts the user may manage are removed.
+  const id = accountCondition(
+    await accountScope(context.workspaceId, "account.manage"),
+    instagramAccountId
+  );
   await prisma.instagramAccount.deleteMany({
     where: {
       workspaceId: context.workspaceId,
-      ...(instagramAccountId ? { id: instagramAccountId } : {}),
+      ...(id !== undefined ? { id } : {}),
     },
   });
 

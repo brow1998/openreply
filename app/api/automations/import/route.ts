@@ -2,12 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db/client";
 import { getWorkspaceInstagramAccount } from "@/lib/instagram-accounts";
+import { canUseSomewhere } from "@/lib/access/scope";
 import { generateReportShareSlug } from "@/lib/reports/share";
 import { generateTrackedLinkSlug } from "@/lib/tracking/server";
-import {
-  canManageWorkspace,
-  getCurrentWorkspaceContext,
-} from "@/lib/workspace-access";
+import { getCurrentWorkspaceContext } from "@/lib/workspace-access";
 
 const campaignSchema = z.object({
   postId: z.string().min(1),
@@ -35,7 +33,7 @@ export async function POST(request: NextRequest) {
       { status: 401 }
     );
   }
-  if (!canManageWorkspace(context.role)) {
+  if (!(await canUseSomewhere(context, "campaign.manage"))) {
     return NextResponse.json(
       { success: false, error: "Only owners and admins can import campaigns" },
       { status: 403 }
@@ -53,7 +51,8 @@ export async function POST(request: NextRequest) {
 
   const account = await getWorkspaceInstagramAccount(
     context.workspaceId,
-    parsed.data.instagramAccountId
+    parsed.data.instagramAccountId,
+    "campaign.manage"
   );
   if (!account) {
     return NextResponse.json(

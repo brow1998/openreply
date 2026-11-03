@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: false, error: "A post is required." }, { status: 400 });
   }
 
-  const account = await getWorkspaceInstagramAccount(workspaceId, params.get("instagramAccountId"));
+  const account = await getWorkspaceInstagramAccount(workspaceId, params.get("instagramAccountId"), "comment.read");
   if (!account) {
     return NextResponse.json(
       { success: false, error: "Instagram account not connected." },

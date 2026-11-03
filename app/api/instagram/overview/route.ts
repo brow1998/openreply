@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentWorkspaceId } from "@/lib/auth";
 import { prisma } from "@/lib/db/client";
 import { getWorkspaceInstagramAccount } from "@/lib/instagram-accounts";
+import { accountCondition } from "@/lib/access/grants";
+import { accountScope } from "@/lib/access/scope";
 import {
   getAllUserMedia,
   getMediaInsights,
@@ -106,7 +108,8 @@ export async function GET(request: NextRequest) {
 
   const account = await getWorkspaceInstagramAccount(
     workspaceId,
-    request.nextUrl.searchParams.get("instagramAccountId")
+    request.nextUrl.searchParams.get("instagramAccountId"),
+    "any"
   );
 
   if (!account) {
@@ -217,8 +220,9 @@ export async function GET(request: NextRequest) {
       }
     );
 
+    const listId = accountCondition(await accountScope(workspaceId, "any"));
     const accounts = await prisma.instagramAccount.findMany({
-      where: { workspaceId },
+      where: { workspaceId, ...(listId !== undefined ? { id: listId } : {}) },
       orderBy: { connectedAt: "desc" },
       select: { id: true, username: true },
     });

@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import DashboardShell from "@/components/dashboard-shell";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/client";
+import { accountCondition } from "@/lib/access/grants";
+import { accountScope } from "@/lib/access/scope";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 
 export async function generateMetadata() {
@@ -27,8 +29,9 @@ export default async function DashboardLayout({
     session.user.id,
     session.user.email
   );
+  const listId = accountCondition(await accountScope(workspace.id, "any"));
   const accounts = await prisma.instagramAccount.findMany({
-    where: { workspaceId: workspace.id },
+    where: { workspaceId: workspace.id, ...(listId !== undefined ? { id: listId } : {}) },
     orderBy: { connectedAt: "desc" },
     select: { username: true },
   });

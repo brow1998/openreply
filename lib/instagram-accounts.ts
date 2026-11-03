@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/db/client";
+import { accountCondition, type CapabilityRequirement } from "@/lib/access/grants";
+import { accountScope } from "@/lib/access/scope";
 
 export async function canConnectInstagramAccount({
   workspaceId,
@@ -25,19 +27,18 @@ export async function canConnectInstagramAccount({
   };
 }
 
+/**
+ * The account a request acts on: the requested one, else the latest connected.
+ * With Pedro sign-in on, only accounts the user holds `capability` on are found.
+ */
 export async function getWorkspaceInstagramAccount(
   workspaceId: string,
-  instagramAccountId?: string | null
+  instagramAccountId: string | null | undefined,
+  capability: CapabilityRequirement
 ) {
-  if (instagramAccountId && instagramAccountId !== "all") {
-    return prisma.instagramAccount.findFirst({
-      where: { id: instagramAccountId, workspaceId },
-    });
-  }
-
+  const id = accountCondition(await accountScope(workspaceId, capability), instagramAccountId);
   return prisma.instagramAccount.findFirst({
-    where: { workspaceId },
+    where: { workspaceId, ...(id !== undefined ? { id } : {}) },
     orderBy: { connectedAt: "desc" },
   });
 }
-

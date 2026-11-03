@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentWorkspaceId } from "@/lib/auth";
+import { accountCondition } from "@/lib/access/grants";
+import { accountScope } from "@/lib/access/scope";
 import { prisma } from "@/lib/db/client";
 import { createInstagramContext } from "@/lib/instagram/provider";
 import { createLookupCache, getProfilePictureUrl } from "@/lib/meta/client";
@@ -26,8 +28,9 @@ export async function GET() {
     );
   }
 
+  const listId = accountCondition(await accountScope(workspaceId, "any"));
   const rows = await prisma.instagramAccount.findMany({
-    where: { workspaceId },
+    where: { workspaceId, ...(listId !== undefined ? { id: listId } : {}) },
     orderBy: { connectedAt: "desc" },
   });
 

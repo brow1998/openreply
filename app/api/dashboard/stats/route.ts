@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUserId, getCurrentWorkspaceId } from "@/lib/auth";
 import { prisma } from "@/lib/db/client";
+import { accountCondition } from "@/lib/access/grants";
+import { accountScope } from "@/lib/access/scope";
 import {
   calculateCtr,
   CLICK_ROW_SELECT,
@@ -27,13 +29,13 @@ export async function GET(request: NextRequest) {
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const requestedInstagramAccountId =
     request.nextUrl.searchParams.get("instagramAccountId");
-  const selectedAccountId =
-    requestedInstagramAccountId && requestedInstagramAccountId !== "all"
-      ? requestedInstagramAccountId
-      : null;
-  const accountFilter = selectedAccountId
-    ? { instagramAccountId: selectedAccountId }
-    : {};
+  const scope = await accountScope(workspaceId, "any");
+  const selectedAccountId = accountCondition(scope, requestedInstagramAccountId);
+  const accountFilter =
+    selectedAccountId !== undefined ? { instagramAccountId: selectedAccountId } : {};
+  // The account list (and "latest account") stay workspace-wide unless scoped.
+  const listId = accountCondition(scope);
+  const listFilter = listId !== undefined ? { id: listId } : {};
 
   const [
     workspace,
@@ -61,7 +63,7 @@ export async function GET(request: NextRequest) {
       },
     }),
     prisma.instagramAccount.findFirst({
-      where: { workspaceId },
+      where: { workspaceId, ...listFilter },
       orderBy: { connectedAt: "desc" },
       select: {
         id: true,
@@ -73,7 +75,7 @@ export async function GET(request: NextRequest) {
       },
     }),
     prisma.instagramAccount.findMany({
-      where: { workspaceId },
+      where: { workspaceId, ...listFilter },
       orderBy: { connectedAt: "desc" },
       select: {
         id: true,
@@ -208,7 +210,7 @@ export async function GET(request: NextRequest) {
       workspace,
       instagramAccount,
       instagramAccounts,
-      selectedInstagramAccountId: selectedAccountId,
+      selectedInstagramAccountId: typeof selectedAccountId === "string" ? selectedAccountId : null,
       totalAutomations,
       activeAutomations,
       dmsSentToday,

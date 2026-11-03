@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { canManageWorkspace, getCurrentWorkspaceContext } from "@/lib/workspace-access";
+import { getCurrentWorkspaceContext } from "@/lib/workspace-access";
+import { canUseSomewhere } from "@/lib/access/scope";
 import { getBaseUrl, getMissingInstagramOAuthEnv } from "@/lib/env";
 import { createOAuthState, getAuthorizationUrl } from "@/lib/meta/oauth";
 
@@ -8,7 +9,7 @@ export async function GET() {
   if (!context) {
     return NextResponse.redirect(`${getBaseUrl()}/login`);
   }
-  if (!canManageWorkspace(context.role)) {
+  if (!(await canUseSomewhere(context, "account.manage"))) {
     return NextResponse.redirect(`${getBaseUrl()}/settings?instagram=forbidden`);
   }
 

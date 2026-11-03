@@ -54,7 +54,8 @@ export async function POST(request: NextRequest) {
 
   const account = await getWorkspaceInstagramAccount(
     workspaceId,
-    body.instagramAccountId ?? null
+    body.instagramAccountId ?? null,
+    "comment.reply"
   );
   if (!account) {
     return NextResponse.json(

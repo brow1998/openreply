@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentWorkspaceId } from "@/lib/auth";
+import { accountCondition } from "@/lib/access/grants";
+import { accountScope, canUseSomewhere } from "@/lib/access/scope";
+import { getWorkspaceInstagramAccount } from "@/lib/instagram-accounts";
 import { prisma } from "@/lib/db/client";
 import {
   calculateCtr,
@@ -15,10 +18,7 @@ import {
   syncCampaignLinks,
 } from "@/lib/campaigns/links";
 import { buildReportUrl, generateReportShareSlug } from "@/lib/reports/share";
-import {
-  canManageWorkspace,
-  getCurrentWorkspaceContext,
-} from "@/lib/workspace-access";
+import { getCurrentWorkspaceContext } from "@/lib/workspace-access";
 
 // This list is read-your-writes (created/imported campaigns must show up
 // immediately), so never cache it at the route or CDN layer.
@@ -139,12 +139,11 @@ export async function GET(request: NextRequest) {
       { status: 401 }
     );
   }
-  const instagramAccountId =
-    request.nextUrl.searchParams.get("instagramAccountId");
-  const accountFilter =
-    instagramAccountId && instagramAccountId !== "all"
-      ? { instagramAccountId }
-      : {};
+  const instagramAccountId = accountCondition(
+    await accountScope(workspaceId, "any"),
+    request.nextUrl.searchParams.get("instagramAccountId")
+  );
+  const accountFilter = instagramAccountId !== undefined ? { instagramAccountId } : {};
 
   const automations = await prisma.automation.findMany({
     where: { workspaceId, ...accountFilter },
@@ -294,7 +293,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (!canManageWorkspace(context.role)) {
+  if (!(await canUseSomewhere(context, "campaign.manage"))) {
     return NextResponse.json(
       { success: false, error: "Only owners and admins can create campaigns" },
       { status: 403 }
@@ -327,14 +326,7 @@ export async function POST(request: NextRequest) {
       where: { id: workspaceId },
       select: { id: true },
     }),
-    requestedInstagramAccountId
-      ? prisma.instagramAccount.findFirst({
-          where: { id: requestedInstagramAccountId, workspaceId },
-        })
-      : prisma.instagramAccount.findFirst({
-          where: { workspaceId },
-          orderBy: { connectedAt: "desc" },
-        }),
+    getWorkspaceInstagramAccount(workspaceId, requestedInstagramAccountId, "campaign.manage"),
   ]);
 
   if (!workspace) {
@@ -443,7 +435,7 @@ export async function PATCH(request: NextRequest) {
     );
   }
 
-  if (!canManageWorkspace(context.role)) {
+  if (!(await canUseSomewhere(context, "campaign.manage"))) {
     return NextResponse.json(
       { success: false, error: "Only owners and admins can update campaigns" },
       { status: 403 }
@@ -475,7 +467,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   const existing = await prisma.automation.findFirst({
-    where: { id: automationId, workspaceId },
+    where: { id: automationId, workspaceId, ...(await campaignAccountFilter(workspaceId)) },
   });
 
   if (!existing) {
@@ -497,8 +489,12 @@ export async function PATCH(request: NextRequest) {
     automationData.instagramAccountId !== undefined &&
     automationData.instagramAccountId !== existing.instagramAccountId
   ) {
+    const scope = await accountScope(workspaceId, "campaign.manage");
     const account = await prisma.instagramAccount.findFirst({
-      where: { id: automationData.instagramAccountId, workspaceId },
+      where: {
+        id: scope === null ? automationData.instagramAccountId : { in: scope.filter((id) => id === automationData.instagramAccountId) },
+        workspaceId,
+      },
       select: { id: true },
     });
     if (!account) {
@@ -574,7 +570,7 @@ export async function DELETE(request: NextRequest) {
     );
   }
 
-  if (!canManageWorkspace(context.role)) {
+  if (!(await canUseSomewhere(context, "campaign.manage"))) {
     return NextResponse.json(
       { success: false, error: "Only owners and admins can delete campaigns" },
       { status: 403 }
@@ -592,7 +588,7 @@ export async function DELETE(request: NextRequest) {
   }
 
   const existing = await prisma.automation.findFirst({
-    where: { id: automationId, workspaceId },
+    where: { id: automationId, workspaceId, ...(await campaignAccountFilter(workspaceId)) },
   });
 
   if (!existing) {
@@ -605,4 +601,10 @@ export async function DELETE(request: NextRequest) {
   await prisma.automation.delete({ where: { id: automationId } });
 
   return NextResponse.json({ success: true, data: { deleted: true } });
+}
+
+/** With Pedro sign-in on, campaigns of accounts the user cannot manage are invisible. */
+async function campaignAccountFilter(workspaceId: string) {
+  const id = accountCondition(await accountScope(workspaceId, "campaign.manage"));
+  return id !== undefined ? { instagramAccountId: id } : {};
 }

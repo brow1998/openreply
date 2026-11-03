@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentWorkspaceId } from "@/lib/auth";
+import { isPedroAuthEnabled } from "@/lib/access/pedro";
+import { canManageWorkspace, getCurrentWorkspaceContext } from "@/lib/workspace-access";
 import { prisma } from "@/lib/db/client";
 import { getDMQueue } from "@/lib/queue/client";
 import { getWorkerAlerts, getWorkerHealth } from "@/lib/ops/worker-health";
@@ -13,6 +15,14 @@ export async function GET() {
       { success: false, error: "Unauthorized" },
       { status: 401 }
     );
+  }
+  // With Pedro sign-in on, members come from Pedro and see only their accounts:
+  // the workspace-wide diagnostics stay with owners and admins.
+  if (isPedroAuthEnabled()) {
+    const context = await getCurrentWorkspaceContext();
+    if (!context || !canManageWorkspace(context.role)) {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    }
   }
 
   const [

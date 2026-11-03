@@ -9,7 +9,8 @@ import {
   exchangeCodeForToken,
   verifyOAuthState,
 } from "@/lib/meta/oauth";
-import { canManageWorkspace } from "@/lib/workspace-access";
+import { canUseSomewhere } from "@/lib/access/scope";
+import { isPedroAuthEnabled } from "@/lib/access/pedro";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
@@ -37,7 +38,10 @@ export async function GET(request: NextRequest) {
     },
   });
 
-  if (!membership || !canManageWorkspace(membership.role)) {
+  if (
+    !membership ||
+    !(await canUseSomewhere({ workspaceId: state.workspaceId, role: membership.role }, "account.manage"))
+  ) {
     return NextResponse.redirect(`${baseUrl}/settings?instagram=forbidden`);
   }
 
@@ -84,6 +88,8 @@ export async function GET(request: NextRequest) {
     }
 
     const data = {
+      // Pedro links channels by the app-scoped id, not by instagramId.
+      appScopedId: userInfo.id,
       username: userInfo.username,
       name: userInfo.name,
       accessToken: encryptedToken,
@@ -100,6 +106,10 @@ export async function GET(request: NextRequest) {
       await prisma.instagramAccount.create({ data: { ...data, workspaceId: state.workspaceId, instagramId, provider: 'META' } });
     }
 
+    if (isPedroAuthEnabled()) {
+      // The new account has no grants yet: ask Pedro again on the next request.
+      await prisma.user.update({ where: { id: session.user.id }, data: { accessRefreshedAt: null } });
+    }
     return NextResponse.redirect(`${baseUrl}/dashboard?connected=true`);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";

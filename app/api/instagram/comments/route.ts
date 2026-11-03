@@ -59,7 +59,8 @@ export async function GET(request: NextRequest) {
 
   const account = await getWorkspaceInstagramAccount(
     workspaceId,
-    request.nextUrl.searchParams.get("instagramAccountId")
+    request.nextUrl.searchParams.get("instagramAccountId"),
+    "comment.read"
   );
   if (!account) {
     return NextResponse.json(
