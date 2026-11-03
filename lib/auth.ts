@@ -15,6 +15,7 @@ import {
   pedroEndpoints,
 } from "@/lib/access/pedro";
 import { refreshUserGrants } from "@/lib/access/refresh";
+import { hasPedroAccess } from "@/lib/access/grants";
 
 type AdapterPrismaClient = Parameters<typeof PrismaAdapter>[0];
 
@@ -75,9 +76,11 @@ export const authConfig = {
   callbacks: {
     // Runs before the magic link is sent, so a blocked address never receives
     // one, and again when the link is verified.
-    async signIn({ user, account }) {
-      // Pedro decides who may come in; what they see is limited to their grants.
-      if (account?.provider === PEDRO_PROVIDER_ID) return true;
+    async signIn({ user, account, profile }) {
+      // Pedro decides who may come in, but only someone it granted something on a
+      // channel (or a platform admin) gets past here: a Pedro account with no
+      // channel would otherwise land in a personal workspace as its owner.
+      if (account?.provider === PEDRO_PROVIDER_ID) return hasPedroAccess(profile as PedroAccess | undefined);
       if (isEmailAllowedToSignIn(user?.email)) return true;
       if (!user?.email) return false;
       // Someone with a pending, unexpired invitation may sign in even when the

@@ -59,8 +59,34 @@ describe("signIn through Pedro", () => {
     const allowed = await authConfig.callbacks.signIn!({
       user: { email: "equipe@example.com" },
       account: { provider: "pedro" },
+      profile: { platformAdmin: false, channels: [{ capabilities: ["comment.read"] }] },
     } as never);
     expect(allowed).toBe(true);
     expect(findFirst).not.toHaveBeenCalled();
+  });
+});
+
+describe("signIn through Pedro: who Pedro granted something to", () => {
+  const withPedro = (profile: unknown) =>
+    authConfig.callbacks.signIn!({
+      user: { email: "x@example.com" },
+      account: { provider: "pedro" },
+      profile,
+    } as never) as Promise<boolean>;
+
+  it("lets in someone Pedro granted a capability to", async () => {
+    expect(
+      await withPedro({ platformAdmin: false, channels: [{ capabilities: ["inbox.read"] }] })
+    ).toBe(true);
+  });
+
+  it("lets in a platform admin", async () => {
+    expect(await withPedro({ platformAdmin: true, channels: [] })).toBe(true);
+  });
+
+  it("refuses a Pedro account with no capability on any channel", async () => {
+    expect(await withPedro({ platformAdmin: false, channels: [{ capabilities: [] }] })).toBe(false);
+    expect(await withPedro({ platformAdmin: false, channels: [] })).toBe(false);
+    expect(await withPedro(undefined)).toBe(false);
   });
 });

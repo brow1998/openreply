@@ -146,3 +146,9 @@ export function parsePedroAccess(value: unknown): PedroAccess | null {
     channels,
   };
 }
+
+/** Pedro granted something on at least one channel, or the person is a platform admin. */
+export function hasPedroAccess(access: PedroAccess | undefined | null): boolean {
+  if (!access) return false;
+  return Boolean(access.platformAdmin) || (access.channels ?? []).some((c) => (c.capabilities ?? []).length > 0);
+}
