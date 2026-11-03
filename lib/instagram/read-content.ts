@@ -150,3 +150,25 @@ export async function getUserInfo({
       : {}),
   };
 }
+
+/** Newest posts with their comments, for the Comments inbox. Direct Meta only. */
+export async function getInboxPosts({
+  context,
+  postLimit,
+  commentLimit,
+}: {
+  context: InstagramContext;
+  postLimit?: number;
+  commentLimit?: number;
+}): Promise<meta.InboxPost[]> {
+  if (context.provider !== "META")
+    throw new CommentsInboxUnavailableError();
+  return meta.getInboxPosts(context.accessToken, postLimit, commentLimit);
+}
+
+export class CommentsInboxUnavailableError extends Error {
+  constructor() {
+    super("The Comments inbox needs a direct Instagram connection.");
+    this.name = "CommentsInboxUnavailableError";
+  }
+}

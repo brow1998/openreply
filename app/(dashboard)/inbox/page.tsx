@@ -17,6 +17,7 @@ import AccountSelect, { type AccountOption } from "@/components/account-select";
 import { readCache, writeCache } from "@/lib/client-cache";
 import type { ConversationListItem } from "@/app/api/instagram/conversations/route";
 import type { ThreadMessage } from "@/app/api/instagram/conversations/[id]/route";
+import MessageContent from "@/components/message-content";
 
 const POLL_MS = 12_000;
 // Cached list/threads are shown instantly on revisit, then revalidated in the
@@ -222,6 +223,10 @@ export default function InboxPage() {
       fromMe: true,
       fromUsername: null,
       createdTime: new Date().toISOString(),
+      attachments: [],
+      shares: [],
+      story: null,
+      unsupported: false,
     };
     setMessages((prev) => [...prev, optimistic]);
     setDraft("");
@@ -377,7 +382,7 @@ export default function InboxPage() {
                             : "bg-surface text-foreground border border-border"
                         }`}
                       >
-                        <p className="whitespace-pre-wrap break-words">{m.text}</p>
+                        <MessageContent message={m} />
                         <p
                           className={`mt-1 text-[10px] ${
                             m.fromMe ? "text-white/70" : "text-zinc-500"

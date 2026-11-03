@@ -545,6 +545,31 @@ export interface InstagramMessage {
   message?: string;
   from?: InstagramParticipant;
   to?: { data: InstagramParticipant[] };
+  /** Photos, videos, audio and files sent in the message. */
+  attachments?: {
+    data: {
+      id?: string;
+      mime_type?: string;
+      name?: string;
+      file_url?: string;
+      image_data?: { url?: string; preview_url?: string };
+      video_data?: { url?: string; preview_url?: string };
+    }[];
+  };
+  /** Posts and reels forwarded into the thread. */
+  shares?: {
+    data: {
+      id?: string;
+      link?: string;
+      name?: string;
+      description?: string;
+      image_url?: string;
+    }[];
+  };
+  /** Story mentions and replies to a story. */
+  story?: { mention?: { link?: string }; reply_to?: { link?: string } };
+  reply_to?: { mid?: string; story?: { link?: string } };
+  is_unsupported?: boolean;
 }
 
 export interface InstagramConversation {
@@ -645,6 +670,9 @@ export async function getConversations(
   throw new Error("Instagram conversation pagination exceeded its safety limit");
 }
 
+const MESSAGE_FIELDS =
+  "id,created_time,from,to,message,attachments{id,mime_type,name,file_url,image_data,video_data},shares{id,link,name,description,image_url},story,reply_to,is_unsupported";
+
 /**
  * The messages in a conversation, with content. Meta only returns full details
  * for the 20 most recent messages, newest first.
@@ -653,15 +681,74 @@ export async function getConversationMessages(
   accessToken: string,
   conversationId: string
 ): Promise<InstagramMessage[]> {
-  const url = new URL(`${instagramGraphBase()}/${conversationId}`);
-  url.searchParams.set("fields", "messages{id,created_time,from,to,message}");
+  const read = async (fields: string) => {
+    const url = new URL(`${instagramGraphBase()}/${conversationId}`);
+    url.searchParams.set("fields", fields);
+    url.searchParams.set("access_token", accessToken);
+    const data = await handleResponse<{
+      messages?: { data: InstagramMessage[] };
+    }>(await fetch(url.toString()));
+    return data.messages?.data ?? [];
+  };
+
+  try {
+    return await read(`messages{${MESSAGE_FIELDS}}`);
+  } catch (error) {
+    // A field Meta rejects for this account must not take the whole thread
+    // down: fall back to plain text, which is what this always returned.
+    if (!(error instanceof MetaApiError)) throw error;
+    console.warn("[Conversations] Rich message fields rejected, using text only", {
+      code: error.code,
+      subcode: error.subcode,
+    });
+    return read("messages{id,created_time,from,to,message}");
+  }
+}
+
+export interface InboxComment {
+  id: string;
+  text?: string;
+  timestamp?: string;
+  like_count?: number;
+  from?: InstagramParticipant;
+  replies?: { data: Omit<InboxComment, "replies">[] };
+}
+
+export interface InboxPost {
+  id: string;
+  caption?: string;
+  media_type?: string;
+  thumbnail_url?: string;
+  media_url?: string;
+  permalink?: string;
+  timestamp?: string;
+  comments_count?: number;
+  comments?: { data: InboxComment[] };
+}
+
+/**
+ * The newest posts with their newest comments and replies, in one request, for
+ * the Comments inbox. Bounded on purpose (a viral post's whole back-catalogue is
+ * never pulled); `getRecentMediaComments` is the one that pages.
+ */
+export async function getInboxPosts(
+  accessToken: string,
+  postLimit = 12,
+  commentLimit = 25
+): Promise<InboxPost[]> {
+  const url = new URL(`${instagramGraphBase()}/me/media`);
+  url.searchParams.set(
+    "fields",
+    "id,caption,media_type,thumbnail_url,media_url,permalink,timestamp,comments_count," +
+      `comments.order(reverse_chronological).limit(${commentLimit}){id,text,timestamp,like_count,from,replies{id,text,timestamp,from}}`
+  );
+  url.searchParams.set("limit", String(postLimit));
   url.searchParams.set("access_token", accessToken);
 
-  const response = await fetch(url.toString());
-  const data = await handleResponse<{ messages?: { data: InstagramMessage[] } }>(
-    response
+  const data = await handleResponse<{ data?: InboxPost[] }>(
+    await fetch(url.toString())
   );
-  return data.messages?.data ?? [];
+  return data.data ?? [];
 }
 
 export async function getUserInfo(accessToken: string): Promise<InstagramUser> {

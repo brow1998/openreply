@@ -6,8 +6,9 @@ import {
   MetaApiError,
 } from "@/lib/instagram/provider";
 import { createInstagramContext } from "@/lib/instagram/provider";
+import { normalizeMessage, type RichMessage } from "@/lib/instagram/normalize-message";
 
-export interface ThreadMessage {
+export interface ThreadMessage extends RichMessage {
   id: string;
   text: string;
   fromMe: boolean;
@@ -59,6 +60,7 @@ export async function GET(request: NextRequest, { params }: RouteProps) {
         fromMe: m.from?.id === account.instagramId,
         fromUsername: m.from?.username ?? null,
         createdTime: m.created_time ?? null,
+        ...normalizeMessage(m),
       }))
       .reverse();
 
