@@ -38,6 +38,7 @@ call() {
 echo "[cron] scheduler started, target $BASE_URL"
 
 last_slot=""
+last_alert_slot=""
 last_daily=""
 
 while true; do
@@ -55,6 +56,17 @@ while true; do
       if [ "$last_slot" != "$hhmm" ]; then
         last_slot="$hhmm"
         call attach-next-reel
+      fi
+      ;;
+  esac
+
+  # Operational alerts every 15 minutes: a dead worker or a stuck queue stops
+  # every campaign silently, so the check runs often (mails are deduped).
+  case "$minute" in
+    00|15|30|45)
+      if [ "$last_alert_slot" != "$hhmm" ]; then
+        last_alert_slot="$hhmm"
+        call health-alert
       fi
       ;;
   esac

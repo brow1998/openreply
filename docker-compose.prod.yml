@@ -27,6 +27,8 @@ x-app: &app
     EMAIL_SERVER: smtp://mail:587?ignoreTLS=true
     EMAIL_FROM: ${EMAIL_FROM:-OpenReply <reply@useshelfie.com>}
     ALLOWED_EMAILS: ${ALLOWED_EMAILS:?without it anyone can sign up}
+    # Where operational alerts (worker down, token expiring...) are mailed, besides workspace owners.
+    OPS_ALERT_EMAIL: ${OPS_ALERT_EMAIL:-${ALLOWED_EMAILS}}
     META_GRAPH_API_VERSION: ${META_GRAPH_API_VERSION:-v25.0}
     INSTAGRAM_APP_ID: ${INSTAGRAM_APP_ID:-}
     INSTAGRAM_APP_SECRET: ${INSTAGRAM_APP_SECRET:-}
