@@ -190,7 +190,7 @@ export default function CommentsPage() {
         )}
       </div>
 
-      <div className="grid h-[calc(100dvh-11rem)] grid-cols-1 overflow-hidden rounded border border-border sm:grid-cols-[320px_1fr]">
+      <div className="grid h-[calc(100dvh-11rem)] grid-cols-1 overflow-hidden rounded border border-border sm:grid-cols-[320px_minmax(0,1fr)]">
         <div
           className={`min-h-0 flex-col border-b border-border sm:flex sm:border-b-0 sm:border-r ${
             active ? "hidden" : "flex"
@@ -254,7 +254,7 @@ export default function CommentsPage() {
           </div>
         </div>
 
-        <div className={`min-h-0 flex-col ${active ? "flex" : "hidden sm:flex"}`}>
+        <div className={`min-h-0 min-w-0 flex-col ${active ? "flex" : "hidden sm:flex"}`}>
           {!active ? (
             <div className="flex flex-1 items-center justify-center p-6 text-sm text-muted">
               {t("Select a post to read and reply to its comments.")}

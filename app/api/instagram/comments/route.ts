@@ -79,14 +79,14 @@ export async function GET(request: NextRequest) {
         const replies = (c.replies?.data ?? []).map((r) => ({
           id: r.id,
           text: r.text ?? "",
-          username: r.from?.username ?? null,
+          username: r.username ?? r.from?.username ?? null,
           timestamp: r.timestamp ?? null,
           fromMe: r.from?.id === account.instagramId,
         }));
         return {
           id: c.id,
           text: c.text ?? "",
-          username: c.from?.username ?? null,
+          username: c.username ?? c.from?.username ?? null,
           userId: c.from?.id ?? null,
           timestamp: c.timestamp ?? null,
           likeCount: c.like_count ?? 0,

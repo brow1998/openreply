@@ -711,6 +711,8 @@ export interface InboxComment {
   timestamp?: string;
   like_count?: number;
   from?: InstagramParticipant;
+  /** Nested replies carry the author here; `from` has no username on them. */
+  username?: string;
   replies?: { data: Omit<InboxComment, "replies">[] };
 }
 
@@ -740,7 +742,7 @@ export async function getInboxPosts(
   url.searchParams.set(
     "fields",
     "id,caption,media_type,thumbnail_url,media_url,permalink,timestamp,comments_count," +
-      `comments.order(reverse_chronological).limit(${commentLimit}){id,text,timestamp,like_count,from,replies{id,text,timestamp,from}}`
+      `comments.order(reverse_chronological).limit(${commentLimit}){id,text,timestamp,like_count,from,username,replies{id,text,timestamp,from,username}}`
   );
   url.searchParams.set("limit", String(postLimit));
   url.searchParams.set("access_token", accessToken);
