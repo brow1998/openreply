@@ -8,10 +8,15 @@ import type { ThreadMessage } from "@/app/api/instagram/conversations/[id]/route
  * (photos, videos, forwarded posts and reels, story mentions and replies).
  * Instagram's CDN links expire, so every media tile degrades to a plain link.
  */
-export default function MessageContent({ message: m }: { message: ThreadMessage }) {
+export default function MessageContent({ message }: { message: ThreadMessage }) {
   const { t } = useI18n();
+  // Threads cached in the browser before these fields existed lack them.
+  const attachments = message.attachments ?? [];
+  const shares = message.shares ?? [];
+  const story = message.story ?? null;
+  const m = { ...message, attachments, shares, story };
   const hasExtras =
-    m.attachments.length > 0 || m.shares.length > 0 || m.story !== null || m.unsupported;
+    attachments.length > 0 || shares.length > 0 || story !== null || Boolean(message.unsupported);
   const linkClass = "underline underline-offset-2 break-all";
 
   return (

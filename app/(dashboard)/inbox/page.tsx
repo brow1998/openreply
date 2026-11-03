@@ -25,7 +25,8 @@ const POLL_MS = 12_000;
 // so this is what makes the inbox feel fast after the first load.
 const CACHE_MAX_AGE_MS = 60_000;
 const convCacheKey = (accountId: string) => `inbox:convs:${accountId}`;
-const msgCacheKey = (conversationId: string) => `inbox:msgs:${conversationId}`;
+// v2: messages gained attachments/shares/story; older cached threads lack them.
+const msgCacheKey = (conversationId: string) => `inbox:msgs:v2:${conversationId}`;
 
 function formatTime(iso: string | null, locale: Locale): string {
   if (!iso) return "";
