@@ -1,4 +1,5 @@
 import NextAuth, { type NextAuthConfig } from "next-auth";
+import type { OAuthConfig } from "next-auth/providers";
 import Nodemailer from "next-auth/providers/nodemailer";
 import Resend from "next-auth/providers/resend";
 import { PrismaAdapter } from "@auth/prisma-adapter";
@@ -6,6 +7,14 @@ import { prisma } from "@/lib/db/client";
 import { ensureWorkspaceForUser, getPrimaryWorkspace } from "@/lib/workspace";
 import { isEmailAllowedToSignIn } from "@/lib/env";
 import { normalizeInvitationEmail } from "@/lib/workspace-invitations";
+import type { PedroAccess } from "@/lib/access/grants";
+import {
+  isPedroAuthEnabled,
+  PEDRO_PROVIDER_ID,
+  PEDRO_SCOPE,
+  pedroEndpoints,
+} from "@/lib/access/pedro";
+import { refreshUserGrants } from "@/lib/access/refresh";
 
 type AdapterPrismaClient = Parameters<typeof PrismaAdapter>[0];
 
@@ -21,6 +30,37 @@ const smtpServer = process.env.EMAIL_SERVER;
  */
 export const EMAIL_PROVIDER_ID = smtpServer ? "nodemailer" : "resend";
 
+/**
+ * Sign-in through Pedro, only when PEDRO_OAUTH_CLIENT_ID is set. Public client
+ * (PKCE, no secret); the profile is Pedro's access answer, so the same call
+ * that identifies the user also lists their channels.
+ */
+function pedroProvider(): OAuthConfig<PedroAccess> {
+  const endpoints = pedroEndpoints();
+  return {
+    id: PEDRO_PROVIDER_ID,
+    name: "Pedro",
+    type: "oauth",
+    clientId: process.env.PEDRO_OAUTH_CLIENT_ID,
+    client: { token_endpoint_auth_method: "none" },
+    checks: ["pkce", "state"],
+    authorization: { url: endpoints.authorize, params: { scope: PEDRO_SCOPE } },
+    token: endpoints.token,
+    userinfo: endpoints.access,
+    // Pedro only signs people in by verified email (magic link or Google), so
+    // linking to the existing OpenReply user with that email is safe.
+    allowDangerousEmailAccountLinking: true,
+    profile(profile) {
+      return {
+        id: profile.userId,
+        name: profile.name ?? null,
+        email: profile.email,
+        image: profile.image ?? null,
+      };
+    },
+  };
+}
+
 export const authConfig = {
   adapter: PrismaAdapter(prisma as unknown as AdapterPrismaClient),
   providers: [
@@ -30,11 +70,14 @@ export const authConfig = {
           apiKey: process.env.RESEND_API_KEY ?? "missing-resend-api-key",
           from: emailFrom,
         }),
+    ...(isPedroAuthEnabled() ? [pedroProvider()] : []),
   ],
   callbacks: {
     // Runs before the magic link is sent, so a blocked address never receives
     // one, and again when the link is verified.
-    async signIn({ user }) {
+    async signIn({ user, account }) {
+      // Pedro decides who may come in; what they see is limited to their grants.
+      if (account?.provider === PEDRO_PROVIDER_ID) return true;
       if (isEmailAllowedToSignIn(user?.email)) return true;
       if (!user?.email) return false;
       // Someone with a pending, unexpired invitation may sign in even when the
@@ -58,8 +101,18 @@ export const authConfig = {
     },
   },
   events: {
+    async signIn({ user, account }) {
+      if (account?.provider !== PEDRO_PROVIDER_ID || !user.id || !account.access_token) return;
+      await refreshUserGrants(user.id, {
+        accessToken: account.access_token,
+        refreshToken: account.refresh_token ?? null,
+        expiresAt: account.expires_at ?? null,
+      }).catch((error) => console.error("Pedro grants refresh failed", error));
+    },
     async createUser({ user }) {
-      if (user.id) {
+      // With Pedro on, workspaces come from the grants (the owner's), and the
+      // lazy ensureWorkspaceForUser below covers anyone left without one.
+      if (user.id && !isPedroAuthEnabled()) {
         await ensureWorkspaceForUser(user.id, user.email);
       }
     },

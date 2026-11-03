@@ -530,5 +530,8 @@
   "This username is reserved.": "Это имя зарезервировано.",
   "This username is already taken.": "Это имя уже занято.",
   "Use a JPG, PNG or WebP image.": "Используйте JPG, PNG или WebP.",
-  "The photo is too large.": "Фото слишком большое."
+  "The photo is too large.": "Фото слишком большое.",
+  "Signed in with Pedro. Who sees which account is managed in Pedro.": "Вход через Pedro. Кто видит какой аккаунт, настраивается в Pedro.",
+  "Sign in with Pedro": "Войти через Pedro",
+  "or": "или"
 }

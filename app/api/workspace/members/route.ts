@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isPedroAuthEnabled } from "@/lib/access/pedro";
 import { z } from "zod";
 import { prisma } from "@/lib/db/client";
 import {
@@ -86,6 +87,7 @@ export async function GET() {
     success: true,
     data: {
       ...(await getMemberPayload(context.workspaceId, context.role)),
+      pedroSignIn: isPedroAuthEnabled(),
     },
   });
 }

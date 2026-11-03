@@ -52,3 +52,15 @@ describe("signIn with an allow-list", () => {
     expect(findFirst).not.toHaveBeenCalled();
   });
 });
+
+describe("signIn through Pedro", () => {
+  it("lets a Pedro login in regardless of ALLOWED_EMAILS", async () => {
+    vi.stubEnv("ALLOWED_EMAILS", "dono@example.com");
+    const allowed = await authConfig.callbacks.signIn!({
+      user: { email: "equipe@example.com" },
+      account: { provider: "pedro" },
+    } as never);
+    expect(allowed).toBe(true);
+    expect(findFirst).not.toHaveBeenCalled();
+  });
+});

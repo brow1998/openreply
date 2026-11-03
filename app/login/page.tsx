@@ -3,6 +3,7 @@ import { getI18n } from "@/lib/i18n/server";
 import { getCampaignTemplate } from "@/lib/templates/campaign-templates";
 import { DemoNotice } from "@/components/demo-notice";
 import { isPublicDemoHost } from "@/lib/env";
+import { isPedroAuthEnabled, PEDRO_PROVIDER_ID } from "@/lib/access/pedro";
 
 const GITHUB_URL = "https://github.com/diwenne/openreply";
 const SETUP_DOCS_URL = `${GITHUB_URL}/blob/main/docs/setup.md`;
@@ -69,6 +70,12 @@ export default async function LoginPage({
     });
   }
 
+  async function signInWithPedro() {
+    "use server";
+    await signIn(PEDRO_PROVIDER_ID, { redirectTo: callbackUrl });
+  }
+  const pedroEnabled = isPedroAuthEnabled();
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-6">
       <div className="w-full max-w-md">
@@ -105,6 +112,18 @@ export default async function LoginPage({
               </p>
             </div>
           ) : (
+            <>
+            {pedroEnabled && (
+              <form action={signInWithPedro} className="mb-5 space-y-5">
+                <button
+                  type="submit"
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-6 py-3.5 text-sm font-semibold text-accent-foreground transition-colors duration-(--dur-ui) ease-(--ease-out-quart) hover:bg-accent-hover"
+                >
+                  {t("Sign in with Pedro")}
+                </button>
+                <p className="text-center text-xs text-muted">{t("or")}</p>
+              </form>
+            )}
             <form action={sendMagicLink} className="space-y-5">
               <div className="space-y-2">
                 <label
@@ -131,6 +150,7 @@ export default async function LoginPage({
                 {t("Email me a magic link")}
               </button>
             </form>
+            </>
           )}
         </div>
       </div>

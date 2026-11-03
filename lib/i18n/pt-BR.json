@@ -530,5 +530,8 @@
   "This username is reserved.": "Este nome de usuário é reservado.",
   "This username is already taken.": "Este nome de usuário já está em uso.",
   "Use a JPG, PNG or WebP image.": "Use uma imagem JPG, PNG ou WebP.",
-  "The photo is too large.": "A foto é grande demais."
+  "The photo is too large.": "A foto é grande demais.",
+  "Signed in with Pedro. Who sees which account is managed in Pedro.": "Login pelo Pedro. Quem vê cada conta é definido no Pedro.",
+  "Sign in with Pedro": "Entrar com o Pedro",
+  "or": "ou"
 }

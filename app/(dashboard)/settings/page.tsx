@@ -50,6 +50,7 @@ interface WorkspaceMembersData {
     inviteUrl: string;
     expiresAt: string;
   }>;
+  pedroSignIn?: boolean;
 }
 
 export default function SettingsPage() {
@@ -286,7 +287,13 @@ export default function SettingsPage() {
           ))}
         </div>
 
-        {membersData?.invitations.length ? (
+        {membersData?.pedroSignIn ? (
+          <p className="mt-6 border-t border-border pt-4 text-xs text-muted">
+            {t("Signed in with Pedro. Who sees which account is managed in Pedro.")}
+          </p>
+        ) : null}
+
+        {!membersData?.pedroSignIn && membersData?.invitations.length ? (
           <div className="mt-6 border-t border-border pt-4">
             <p className="mb-1 text-xs font-medium text-muted">
               {t("Pending invites")}
@@ -330,7 +337,7 @@ export default function SettingsPage() {
           </div>
         ) : null}
 
-        {canManageMembers && (
+        {canManageMembers && !membersData?.pedroSignIn && (
           <form
             onSubmit={inviteMember}
             className="mt-6 grid gap-3 border-t border-border pt-4 sm:grid-cols-[1fr_140px_auto]"

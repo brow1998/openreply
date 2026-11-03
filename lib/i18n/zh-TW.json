@@ -530,5 +530,8 @@
   "This username is reserved.": "此使用者名稱已保留。",
   "This username is already taken.": "此使用者名稱已被使用。",
   "Use a JPG, PNG or WebP image.": "請使用 JPG、PNG 或 WebP 圖片。",
-  "The photo is too large.": "相片太大。"
+  "The photo is too large.": "相片太大。",
+  "Signed in with Pedro. Who sees which account is managed in Pedro.": "透過 Pedro 登入。誰能看到哪個帳號，在 Pedro 中管理。",
+  "Sign in with Pedro": "使用 Pedro 登入",
+  "or": "或"
 }
