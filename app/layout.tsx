@@ -46,13 +46,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    // data-theme is set by the script below before first paint, so the
-    // server markup and the client differ on purpose.
+    // data-theme is set by the script below before first paint (dark unless
+    // the user chose light), so the server markup and the client differ on purpose.
     <html lang="en" className="h-full" suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{var t=localStorage.getItem("openreply-theme");if(t!=="light"&&t!=="dark")t=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";document.documentElement.dataset.theme=t}catch(e){document.documentElement.dataset.theme="dark"}`,
+            __html: `try{var t=localStorage.getItem("openreply-theme");if(t!=="light")t="dark";document.documentElement.dataset.theme=t}catch(e){document.documentElement.dataset.theme="dark"}`,
           }}
         />
       </head>
