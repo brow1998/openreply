@@ -38,8 +38,9 @@ const GRID_COLOR = "var(--c-border)";
 const AXIS_TEXT = "var(--c-muted)";
 
 function formatCompact(n: number, locale: Locale): string {
-  if (Math.abs(n) >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (Math.abs(n) >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  // Two decimals so neighbouring ticks (1.85K, 1.9K) do not both round to "1.9K".
+  if (Math.abs(n) >= 1_000_000) return `${+(n / 1_000_000).toFixed(2)}M`;
+  if (Math.abs(n) >= 1_000) return `${+(n / 1_000).toFixed(2)}K`;
   return n.toLocaleString(locale);
 }
 

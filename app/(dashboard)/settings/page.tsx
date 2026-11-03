@@ -5,7 +5,6 @@ import ThemeToggle from "@/components/theme-toggle";
 import { useI18n } from "@/lib/i18n/provider";
 import { Suspense, useEffect, useState } from "react";
 import type { AccountOption } from "@/components/account-select";
-import { ZernioConnection } from "@/components/zernio-connection";
 import { InstagramConnectNotice } from "@/components/instagram-connect-notice";
 import Avatar from "@/components/avatar";
 import { CircleCheck, CircleDashed } from "lucide-react";
@@ -156,7 +155,6 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      <ZernioConnection canManage={canManageMembers} />
 
       <section className="panel p-4 sm:p-6">
         <h2 className="mb-4 text-sm font-semibold text-foreground">{t("Instagram Connection")}</h2>

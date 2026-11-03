@@ -457,6 +457,10 @@ export default function CommentsPage() {
                   <Layers size={18} strokeWidth={1.75} aria-hidden="true" className="absolute right-2 top-2 text-white drop-shadow" />
                 )}
                 {format === "reels" && views[p.id] != null && (
+                  // Legibility scrim for the count over bright covers.
+                  <span className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-black/60 to-transparent" />
+                )}
+                {format === "reels" && views[p.id] != null && (
                   <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 font-mono text-xs font-medium text-white drop-shadow">
                     <Play size={12} strokeWidth={2} fill="currentColor" aria-hidden="true" />
                     {formatCount(views[p.id]!, locale)}
