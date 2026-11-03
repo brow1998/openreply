@@ -5,6 +5,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/db/client";
 import { ensureWorkspaceForUser, getPrimaryWorkspace } from "@/lib/workspace";
 import { isEmailAllowedToSignIn } from "@/lib/env";
+import { normalizeInvitationEmail } from "@/lib/workspace-invitations";
 
 type AdapterPrismaClient = Parameters<typeof PrismaAdapter>[0];
 
@@ -34,7 +35,20 @@ export const authConfig = {
     // Runs before the magic link is sent, so a blocked address never receives
     // one, and again when the link is verified.
     async signIn({ user }) {
-      return isEmailAllowedToSignIn(user?.email);
+      if (isEmailAllowedToSignIn(user?.email)) return true;
+      if (!user?.email) return false;
+      // Someone with a pending, unexpired invitation may sign in even when the
+      // address is outside ALLOWED_EMAILS, so they can accept it. (The new user
+      // also gets a personal workspace from the createUser event below.)
+      const invitation = await prisma.workspaceInvitation.findFirst({
+        where: {
+          email: normalizeInvitationEmail(user.email),
+          status: "PENDING",
+          expiresAt: { gt: new Date() },
+        },
+        select: { id: true },
+      });
+      return Boolean(invitation);
     },
     async session({ session, user }) {
       if (session.user) {

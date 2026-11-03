@@ -33,13 +33,11 @@ const navItems = [
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  workspaceName: string;
 }
 
 export default function Sidebar({
   isOpen,
   onClose,
-  workspaceName,
 }: SidebarProps) {
   const { t } = useI18n();
   const pathname = usePathname();
@@ -108,11 +106,6 @@ export default function Sidebar({
             );
           })}
         </nav>
-
-        <div className="px-5 py-4 border-t border-border">
-          <p className="text-sm text-foreground truncate">{workspaceName}</p>
-          <p className="text-xs text-muted">{t("Self-hosted")}</p>
-        </div>
       </aside>
     </>
   );

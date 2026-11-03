@@ -514,5 +514,21 @@
   "Light": "Claro",
   "Feed": "Feed",
   "Reels": "Reels",
-  "Hide preview": "Ocultar prévia"
+  "Hide preview": "Ocultar prévia",
+  "Profile": "Perfil",
+  "Change photo": "Trocar foto",
+  "Name": "Nome",
+  "Username": "Nome de usuário",
+  "Email": "E-mail",
+  "Save": "Salvar",
+  "Profile saved": "Perfil salvo",
+  "Could not load your profile.": "Não foi possível carregar seu perfil.",
+  "Could not save your profile.": "Não foi possível salvar seu perfil.",
+  "Letters, numbers, dots and underscores.": "Letras, números, pontos e sublinhados.",
+  "Only letters, numbers, dots and underscores.": "Use só letras, números, pontos e sublinhados.",
+  "Use 3 to 30 characters.": "Use de 3 a 30 caracteres.",
+  "This username is reserved.": "Este nome de usuário é reservado.",
+  "This username is already taken.": "Este nome de usuário já está em uso.",
+  "Use a JPG, PNG or WebP image.": "Use uma imagem JPG, PNG ou WebP.",
+  "The photo is too large.": "A foto é grande demais."
 }

@@ -514,5 +514,21 @@
   "Light": "Светлая",
   "Feed": "Лента",
   "Reels": "Reels",
-  "Hide preview": "Скрыть предпросмотр"
+  "Hide preview": "Скрыть предпросмотр",
+  "Profile": "Профиль",
+  "Change photo": "Сменить фото",
+  "Name": "Имя",
+  "Username": "Имя пользователя",
+  "Email": "Эл. почта",
+  "Save": "Сохранить",
+  "Profile saved": "Профиль сохранён",
+  "Could not load your profile.": "Не удалось загрузить профиль.",
+  "Could not save your profile.": "Не удалось сохранить профиль.",
+  "Letters, numbers, dots and underscores.": "Буквы, цифры, точки и подчёркивания.",
+  "Only letters, numbers, dots and underscores.": "Только буквы, цифры, точки и подчёркивания.",
+  "Use 3 to 30 characters.": "От 3 до 30 символов.",
+  "This username is reserved.": "Это имя зарезервировано.",
+  "This username is already taken.": "Это имя уже занято.",
+  "Use a JPG, PNG or WebP image.": "Используйте JPG, PNG или WebP.",
+  "The photo is too large.": "Фото слишком большое."
 }

@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, Plug, SlidersHorizontal } from "lucide-react";
+import { Activity, Plug, SlidersHorizontal, UserRound } from "lucide-react";
 import { useI18n } from "@/lib/i18n/provider";
 
 const tabs = [
+  { label: "Profile", href: "/settings/profile", icon: UserRound },
   { label: "General", href: "/settings", icon: SlidersHorizontal },
   { label: "API & MCP", href: "/settings/api", icon: Plug },
   { label: "Diagnostics", href: "/settings/diagnostics", icon: Activity },

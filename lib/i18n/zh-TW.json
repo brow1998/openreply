@@ -514,5 +514,21 @@
   "Light": "淺色",
   "Feed": "動態",
   "Reels": "Reels",
-  "Hide preview": "隱藏預覽"
+  "Hide preview": "隱藏預覽",
+  "Profile": "個人資料",
+  "Change photo": "更換相片",
+  "Name": "名稱",
+  "Username": "使用者名稱",
+  "Email": "電子郵件",
+  "Save": "儲存",
+  "Profile saved": "個人資料已儲存",
+  "Could not load your profile.": "無法載入個人資料。",
+  "Could not save your profile.": "無法儲存個人資料。",
+  "Letters, numbers, dots and underscores.": "字母、數字、點與底線。",
+  "Only letters, numbers, dots and underscores.": "只能使用字母、數字、點與底線。",
+  "Use 3 to 30 characters.": "請使用 3 到 30 個字元。",
+  "This username is reserved.": "此使用者名稱已保留。",
+  "This username is already taken.": "此使用者名稱已被使用。",
+  "Use a JPG, PNG or WebP image.": "請使用 JPG、PNG 或 WebP 圖片。",
+  "The photo is too large.": "相片太大。"
 }
