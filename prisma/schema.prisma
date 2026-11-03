@@ -17,9 +17,12 @@ model User {
   image         String?
   /// Chosen handle, stored lowercase; unique case-insensitively (index in migration 20261103120000).
   username      String?
+  /// When the per-account grants below were last rebuilt from Pedro (null: never).
+  accessRefreshedAt DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  accountGrants     UserAccountGrant[]
   accounts          Account[]
   sessions          Session[]
   ownedWorkspaces   Workspace[]       @relation("WorkspaceOwner")
@@ -147,6 +150,8 @@ model InstagramAccount {
   id                String   @id @default(cuid())
   workspaceId       String
   instagramId       String   @unique
+  /// The app-scoped id (`/me?fields=id`). Pedro stores this one, not instagramId (user_id).
+  appScopedId       String?  @unique
   username          String
   name              String?
   provider          InstagramProvider @default(META)
@@ -163,6 +168,7 @@ model InstagramAccount {
   linkClicks  LinkClick[]
   followerSnapshots FollowerSnapshot[]
   contactProfiles   ContactProfile[]
+  userGrants        UserAccountGrant[]
 
   @@index([workspaceId])
 }
@@ -456,4 +462,20 @@ model ContactProfile {
   account InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
 
   @@unique([instagramAccountId, igsid])
+}
+
+/// What a user may do on one Instagram account, as Pedro reported it at the
+/// last refresh (User.accessRefreshedAt). Only read when Pedro sign-in is on.
+model UserAccountGrant {
+  id                 String   @id @default(cuid())
+  userId             String
+  instagramAccountId String
+  capabilities       String[]
+  createdAt          DateTime @default(now())
+
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  instagramAccount InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, instagramAccountId])
+  @@index([instagramAccountId])
 }
