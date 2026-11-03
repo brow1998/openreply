@@ -1,0 +1,173 @@
+# OpenReply on the house Dokploy (reply.useshelfie.com).
+#
+# web + worker + cron share one image; Postgres, Redis and a private Postfix
+# relay live in this stack. Every service has a memory limit: nothing else on
+# the VPS should be able to starve the panel.
+# Secrets come from the Dokploy panel (Environment), never from the repo.
+
+x-app: &app
+  build:
+    context: .
+    dockerfile: Dockerfile
+  image: openreply-app:latest
+  restart: unless-stopped
+  networks:
+    - default
+  environment: &app-env
+    NODE_ENV: production
+    NEXTAUTH_URL: ${NEXTAUTH_URL:?NEXTAUTH_URL is required}
+    NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?}
+    CRON_SECRET: ${CRON_SECRET:?}
+    # Must be identical for web and worker, or sends fail to decrypt tokens.
+    ENCRYPTION_KEY: ${ENCRYPTION_KEY:?}
+    DATABASE_URL: postgresql://openreply:${POSTGRES_PASSWORD:?}@postgres:5432/openreply
+    REDIS_URL: redis://redis:6379
+    # The relay is on this stack's private network only; plain SMTP never
+    # leaves the host. Its STARTTLS cert is self-signed, hence ignoreTLS.
+    EMAIL_SERVER: smtp://mail:587?ignoreTLS=true
+    EMAIL_FROM: ${EMAIL_FROM:-OpenReply <reply@useshelfie.com>}
+    ALLOWED_EMAILS: ${ALLOWED_EMAILS:?without it anyone can sign up}
+    META_GRAPH_API_VERSION: ${META_GRAPH_API_VERSION:-v25.0}
+    INSTAGRAM_APP_ID: ${INSTAGRAM_APP_ID:-}
+    INSTAGRAM_APP_SECRET: ${INSTAGRAM_APP_SECRET:-}
+    FACEBOOK_APP_SECRET: ${FACEBOOK_APP_SECRET:-}
+    WEBHOOK_VERIFY_TOKEN: ${WEBHOOK_VERIFY_TOKEN:?}
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
+services:
+  web:
+    <<: *app
+    # Migrations need the database network, so they run at start, not build.
+    command: ["sh", "-c", "npx prisma migrate deploy && npm run start"]
+    networks:
+      - default
+      - dokploy-network
+    expose:
+      - "3000"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/login"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
+
+  worker:
+    <<: *app
+    command: ["npm", "run", "worker"]
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  cron:
+    <<: *app
+    command: ["sh", "scripts/cron.sh"]
+    environment:
+      CRON_BASE_URL: http://web:3000
+      CRON_SECRET: ${CRON_SECRET:?}
+    depends_on:
+      web:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: openreply
+      POSTGRES_USER: openreply
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openreply"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # AOF: the send queue must survive a restart, or queued DMs are lost.
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # Private relay, same recipe as meubolso/pulseboard (boky/postfix, DKIM
+  # selector `pulse` already published for useshelfie.com). Not on
+  # dokploy-network on purpose: other stacks must not reach it.
+  mail:
+    image: boky/postfix:v5.1.0
+    restart: unless-stopped
+    depends_on:
+      dkim-chave:
+        condition: service_completed_successfully
+    environment:
+      # Space separated, never commas.
+      ALLOWED_SENDER_DOMAINS: useshelfie.com
+      HOSTNAME: mail.useshelfie.com
+      DKIM_SELECTOR: pulse
+    volumes:
+      - dkim:/etc/opendkim/keys
+    expose:
+      - "587"
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+  dkim-chave:
+    image: alpine:3.22
+    restart: "no"
+    environment:
+      DKIM_PRIVATE_KEY_B64: ${DKIM_PRIVATE_KEY_B64:-}
+    volumes:
+      - dkim:/keys
+    entrypoint:
+      - sh
+      - -c
+      - |
+        set -e
+        if [ -z "$${DKIM_PRIVATE_KEY_B64}" ]; then
+          echo "[dkim] no DKIM_PRIVATE_KEY_B64, relay will send unsigned"
+          exit 0
+        fi
+        echo "$${DKIM_PRIVATE_KEY_B64}" | base64 -d > /keys/useshelfie.com.private
+        chmod 600 /keys/useshelfie.com.private
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+
+volumes:
+  pgdata:
+  redisdata:
+  dkim:
+
+networks:
+  dokploy-network:
+    external: true
