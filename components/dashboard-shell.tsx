@@ -6,16 +6,12 @@ import TopBar from "@/components/top-bar";
 
 interface DashboardShellProps {
   children: React.ReactNode;
-  instagramUsername: string | null;
   instagramAccountCount: number;
-  user: { name: string; image: string | null };
 }
 
 export default function DashboardShell({
   children,
-  instagramUsername,
   instagramAccountCount,
-  user,
 }: DashboardShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -31,9 +27,7 @@ export default function DashboardShell({
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <TopBar
           onMenuClick={() => setSidebarOpen(true)}
-          instagramUsername={instagramUsername}
           instagramAccountCount={instagramAccountCount}
-          user={user}
         />
 
         {/* overflow-x-hidden: enabling vertical scrolling makes the browser

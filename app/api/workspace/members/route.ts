@@ -44,6 +44,7 @@ async function getMemberPayload(
             id: true,
             email: true,
             name: true,
+            image: true,
           },
         },
       },

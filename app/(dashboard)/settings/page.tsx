@@ -40,6 +40,7 @@ interface WorkspaceMembersData {
       id: string;
       email: string | null;
       name: string | null;
+      image: string | null;
     };
   }>;
   invitations: Array<{
@@ -270,7 +271,7 @@ export default function SettingsPage() {
               className="flex items-center justify-between gap-4 border-b border-border py-3 last:border-0"
             >
               <div className="flex min-w-0 items-center gap-3">
-                <Avatar name={member.user.name ?? member.user.email ?? "?"} size={32} />
+                <Avatar name={member.user.name ?? member.user.email ?? "?"} src={member.user.image} size={32} />
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-foreground">
                     {member.user.name ?? member.user.email ?? t("Unknown member")}
