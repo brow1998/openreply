@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentWorkspaceId } from "@/lib/auth";
+import { isPedroService } from "@/lib/access/service";
 
 export interface GifResult {
   id: string;
@@ -13,8 +14,9 @@ export interface GifResult {
 // GIF search through Giphy. Needs GIPHY_API_KEY (free at developers.giphy.com);
 // without it the picker falls back to pasting a link.
 export async function GET(request: NextRequest) {
-  const workspaceId = await getCurrentWorkspaceId();
-  if (!workspaceId) {
+  // Pedro's server may ask too: neither touches an account, only who is asking.
+  const allowed = isPedroService(request) || Boolean(await getCurrentWorkspaceId());
+  if (!allowed) {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
   }
 

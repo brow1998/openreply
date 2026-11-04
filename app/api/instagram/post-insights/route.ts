@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentWorkspaceId } from "@/lib/auth";
-import { getWorkspaceInstagramAccount } from "@/lib/instagram-accounts";
+import { instagramAccountForRequest } from "@/lib/access/service";
 import {
   createInstagramContext,
   getMediaInsights,
@@ -19,18 +18,13 @@ export interface PostInsightsResponse {
 
 // Metrics for one post, fetched when its panel opens. `views` only exists for video-like media.
 export async function GET(request: NextRequest) {
-  const workspaceId = await getCurrentWorkspaceId();
-  if (!workspaceId) {
-    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-  }
-
   const params = request.nextUrl.searchParams;
   const mediaId = params.get("mediaId");
   if (!mediaId) {
     return NextResponse.json({ success: false, error: "A post is required." }, { status: 400 });
   }
 
-  const account = await getWorkspaceInstagramAccount(workspaceId, params.get("instagramAccountId"), "comment.read");
+  const account = await instagramAccountForRequest(request, params.get("instagramAccountId"), "comment.read");
   if (!account) {
     return NextResponse.json(
       { success: false, error: "Instagram account not connected." },

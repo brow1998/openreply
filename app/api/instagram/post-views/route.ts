@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentWorkspaceId } from "@/lib/auth";
-import { getWorkspaceInstagramAccount } from "@/lib/instagram-accounts";
+import { instagramAccountForRequest } from "@/lib/access/service";
 import { createInstagramContext, getMediaInsights } from "@/lib/instagram/provider";
 
 export interface PostViewsResponse {
@@ -16,13 +15,8 @@ const cache = new Map<string, { at: number; views: number | null }>();
 
 // Views for a batch of posts, for the numbers shown on the Comments grid.
 export async function GET(request: NextRequest) {
-  const workspaceId = await getCurrentWorkspaceId();
-  if (!workspaceId) {
-    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-  }
-
   const params = request.nextUrl.searchParams;
-  const account = await getWorkspaceInstagramAccount(workspaceId, params.get("instagramAccountId"), "comment.read");
+  const account = await instagramAccountForRequest(request, params.get("instagramAccountId"), "comment.read");
   if (!account) {
     return NextResponse.json(
       { success: false, error: "Instagram account not connected." },

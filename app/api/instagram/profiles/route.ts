@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentWorkspaceId } from "@/lib/auth";
-import { getWorkspaceInstagramAccount } from "@/lib/instagram-accounts";
+import { instagramAccountForRequest } from "@/lib/access/service";
 import { createInstagramContext } from "@/lib/instagram/provider";
 import { prisma } from "@/lib/db/client";
 import { createLookupCache, type InstagramProfile } from "@/lib/meta/client";
@@ -21,16 +20,7 @@ const IGSID = /^\d{1,32}$/;
 
 // Profile photos and names for people in the inbox and the comments.
 export async function GET(request: NextRequest) {
-  const workspaceId = await getCurrentWorkspaceId();
-  if (!workspaceId) {
-    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-  }
-
-  const account = await getWorkspaceInstagramAccount(
-    workspaceId,
-    request.nextUrl.searchParams.get("instagramAccountId"),
-    "any"
-  );
+  const account = await instagramAccountForRequest(request, request.nextUrl.searchParams.get("instagramAccountId"), "any");
   if (!account) {
     return NextResponse.json(
       { success: false, error: "Instagram account not connected." },
