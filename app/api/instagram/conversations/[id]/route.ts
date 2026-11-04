@@ -1,11 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { instagramAccountForRequest } from "@/lib/access/service";
-import {
-  getConversationMessages,
-  MetaApiError,
-} from "@/lib/instagram/provider";
-import { createInstagramContext } from "@/lib/instagram/provider";
-import { normalizeMessage, type RichMessage } from "@/lib/instagram/normalize-message";
+import { MetaApiError } from "@/lib/instagram/provider";
+import { inboxKey, loadThread, threadCache } from "@/lib/instagram/inbox-cache";
+import type { RichMessage } from "@/lib/instagram/normalize-message";
 
 export interface ThreadMessage extends RichMessage {
   id: string;
@@ -22,35 +19,28 @@ export interface ThreadResponse {
 type RouteProps = { params: Promise<{ id: string }> };
 
 // Message history for a single conversation (20 most recent, chronological).
+// Served from the inbox cache when it has a copy; see lib/instagram/inbox-cache.ts.
 export async function GET(request: NextRequest, { params }: RouteProps) {
   const { id: conversationId } = await params;
 
-  const account = await instagramAccountForRequest(request, request.nextUrl.searchParams.get("instagramAccountId"), "inbox.read");
+  const account = await instagramAccountForRequest(
+    request,
+    request.nextUrl.searchParams.get("instagramAccountId"),
+    "inbox.read",
+  );
   if (!account) {
     return NextResponse.json(
       { success: false, error: "Instagram account not connected." },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
   try {
-    const accessToken = await createInstagramContext(account);
-    const raw = await getConversationMessages({
-      context: accessToken,
-      conversationId: conversationId,
-    });
-
-    // The API returns newest-first; reverse to read top-to-bottom.
-    const messages: ThreadMessage[] = raw
-      .map((m) => ({
-        id: m.id,
-        text: m.message ?? "",
-        fromMe: m.from?.id === account.instagramId,
-        fromUsername: m.from?.username ?? null,
-        createdTime: m.created_time ?? null,
-        ...normalizeMessage(m),
-      }))
-      .reverse();
+    const messages = await threadCache.read(
+      inboxKey(account.instagramId, conversationId),
+      () => loadThread(account, conversationId),
+      after,
+    );
 
     const data: ThreadResponse = { messages };
     return NextResponse.json({ success: true, data });
@@ -60,7 +50,7 @@ export async function GET(request: NextRequest, { params }: RouteProps) {
       err instanceof MetaApiError ? err.message : "Failed to load messages";
     return NextResponse.json(
       { success: false, error: message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

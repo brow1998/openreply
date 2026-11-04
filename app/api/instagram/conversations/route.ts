@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { instagramAccountForRequest } from "@/lib/access/service";
 import {
   getConversations,
@@ -8,6 +8,12 @@ import {
   MetaApiError,
 } from "@/lib/instagram/provider";
 import { createInstagramContext } from "@/lib/instagram/provider";
+import {
+  conversationListCache,
+  inboxKey,
+  invalidateInbox,
+  warmThreads,
+} from "@/lib/instagram/inbox-cache";
 
 export interface ConversationListItem {
   id: string;
@@ -28,44 +34,61 @@ export interface ConversationsResponse {
 
 // List the account's DM conversations for the inbox.
 export async function GET(request: NextRequest) {
-  const account = await instagramAccountForRequest(request, request.nextUrl.searchParams.get("instagramAccountId"), "inbox.read");
+  const account = await instagramAccountForRequest(
+    request,
+    request.nextUrl.searchParams.get("instagramAccountId"),
+    "inbox.read",
+  );
   if (!account) {
     return NextResponse.json(
       { success: false, error: "Instagram account not connected." },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
   try {
-    const accessToken = await createInstagramContext(account);
-    const raw = await getConversations({
-      context: accessToken,
-      igUserId: account.instagramId,
-    });
+    const conversations = await conversationListCache.read(
+      inboxKey(account.instagramId),
+      async () => {
+        const accessToken = await createInstagramContext(account);
+        const raw = await getConversations({
+          context: accessToken,
+          igUserId: account.instagramId,
+        });
 
-    const conversations: ConversationListItem[] = raw.map((c) => {
-      const participants = c.participants?.data ?? [];
-      const contact =
-        participants.find((p) => p.id !== account.instagramId) ?? null;
-      const last = c.messages?.data?.[0] ?? null;
+        return raw.map((c): ConversationListItem => {
+          const participants = c.participants?.data ?? [];
+          const contact =
+            participants.find((p) => p.id !== account.instagramId) ?? null;
+          const last = c.messages?.data?.[0] ?? null;
 
-      return {
-        id: c.id,
-        detailsUnavailable: c.detailsUnavailable,
-        contact: {
-          id: contact?.id ?? "",
-          username: contact?.username ?? null,
-        },
-        updatedTime: c.updated_time ?? null,
-        lastMessage: last
-          ? {
-              text: last.message ?? "",
-              fromMe: last.from?.id === account.instagramId,
-              createdTime: last.created_time ?? null,
-            }
-          : null,
-      };
-    });
+          return {
+            id: c.id,
+            detailsUnavailable: c.detailsUnavailable,
+            contact: {
+              id: contact?.id ?? "",
+              username: contact?.username ?? null,
+            },
+            updatedTime: c.updated_time ?? null,
+            lastMessage: last
+              ? {
+                  text: last.message ?? "",
+                  fromMe: last.from?.id === account.instagramId,
+                  createdTime: last.created_time ?? null,
+                }
+              : null,
+          };
+        });
+      },
+      after,
+    );
+
+    // The conversations people open next are the recent ones: have them ready.
+    const recent = conversations
+      .filter((c) => !c.detailsUnavailable)
+      .slice(0, 8)
+      .map((c) => c.id);
+    after(() => warmThreads(account, recent));
 
     const data: ConversationsResponse = {
       conversations,
@@ -84,7 +107,7 @@ export async function GET(request: NextRequest) {
         : "Failed to load conversations";
     return NextResponse.json(
       { success: false, error: message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -102,7 +125,7 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json(
       { success: false, error: "Invalid request body" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -111,15 +134,19 @@ export async function POST(request: NextRequest) {
   if (!body.recipientId || (!text && !gifUrl)) {
     return NextResponse.json(
       { success: false, error: "A recipient and message are required." },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
-  const account = await instagramAccountForRequest(request, body.instagramAccountId ?? null, "inbox.reply");
+  const account = await instagramAccountForRequest(
+    request,
+    body.instagramAccountId ?? null,
+    "inbox.reply",
+  );
   if (!account) {
     return NextResponse.json(
       { success: false, error: "Instagram account not connected." },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -138,11 +165,16 @@ export async function POST(request: NextRequest) {
           userId: body.recipientId,
           message: text!,
         });
+    // The sent message must show on the next read, not after the cache ages out.
+    invalidateInbox(account.instagramId);
     return NextResponse.json({ success: true, data: result });
   } catch (err) {
     console.error("[Conversations] Send error:", err);
     if (err instanceof GifUnavailableError) {
-      return NextResponse.json({ success: false, error: err.message }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: err.message },
+        { status: 400 },
+      );
     }
     // Surface Meta's own message — the common case is the 24-hour messaging
     // window having closed, which the user needs to see explicitly.
@@ -150,7 +182,7 @@ export async function POST(request: NextRequest) {
       err instanceof MetaApiError ? err.message : "Failed to send message";
     return NextResponse.json(
       { success: false, error: message },
-      { status: 502 }
+      { status: 502 },
     );
   }
 }

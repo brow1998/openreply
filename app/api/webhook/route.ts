@@ -5,6 +5,7 @@ import {
   verifyWebhookSignature,
 } from "@/lib/meta/webhook";
 import { processInstagramWebhook } from "@/lib/queue/process-webhook";
+import { invalidateInbox } from "@/lib/instagram/inbox-cache";
 
 
 export async function GET(request: NextRequest) {
@@ -59,6 +60,11 @@ export async function POST(request: NextRequest) {
       { success: false, error: "Invalid JSON" },
       { status: 400 }
     );
+  }
+
+  // A DM in or out of the account: the inbox cache must not serve the copy from before it.
+  for (const entry of (payload as { entry?: { id?: unknown; messaging?: unknown }[] }).entry ?? []) {
+    if (entry?.messaging && typeof entry.id === "string") invalidateInbox(entry.id);
   }
 
   try {
