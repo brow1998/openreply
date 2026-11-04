@@ -6,6 +6,7 @@
  * Icon + label nav with active state and workspace section.
  */
 
+import { signOutAction } from "@/lib/auth-actions";
 import { useI18n } from "@/lib/i18n/provider";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -13,6 +14,7 @@ import {
   BarChart3,
   Inbox,
   LayoutDashboard,
+  LogOut,
   MessageSquare,
   ScrollText,
   Settings,
@@ -106,6 +108,20 @@ export default function Sidebar({
             );
           })}
         </nav>
+
+        <form
+          action={signOutAction}
+          className="px-3 py-4 border-t border-border"
+          style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}
+        >
+          <button
+            type="submit"
+            className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted hover:text-foreground hover:bg-surface-hover transition-colors duration-(--dur-ui) ease-(--ease-out-quart)"
+          >
+            <LogOut size={18} strokeWidth={1.75} aria-hidden="true" />
+            {t("Sign out")}
+          </button>
+        </form>
       </aside>
     </>
   );
