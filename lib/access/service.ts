@@ -7,7 +7,7 @@ import { getWorkspaceInstagramAccount } from "@/lib/instagram-accounts";
 /** Header with the Instagram app-scoped id Pedro stores for the channel. */
 export const PEDRO_ACCOUNT_HEADER = "x-instagram-app-scoped-id";
 
-function isPedroService(request: NextRequest): boolean {
+export function isPedroService(request: NextRequest): boolean {
   const secret = process.env.PEDRO_SERVICE_SECRET;
   const header = request.headers.get("authorization");
   if (!secret || !header?.startsWith("Bearer ")) return false;
