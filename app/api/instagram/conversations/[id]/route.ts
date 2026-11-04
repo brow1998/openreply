@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentWorkspaceId } from "@/lib/auth";
-import { getWorkspaceInstagramAccount } from "@/lib/instagram-accounts";
+import { instagramAccountForRequest } from "@/lib/access/service";
 import {
   getConversationMessages,
   MetaApiError,
@@ -24,21 +23,9 @@ type RouteProps = { params: Promise<{ id: string }> };
 
 // Message history for a single conversation (20 most recent, chronological).
 export async function GET(request: NextRequest, { params }: RouteProps) {
-  const workspaceId = await getCurrentWorkspaceId();
-  if (!workspaceId) {
-    return NextResponse.json(
-      { success: false, error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
-
   const { id: conversationId } = await params;
 
-  const account = await getWorkspaceInstagramAccount(
-    workspaceId,
-    request.nextUrl.searchParams.get("instagramAccountId"),
-    "inbox.read"
-  );
+  const account = await instagramAccountForRequest(request, request.nextUrl.searchParams.get("instagramAccountId"), "inbox.read");
   if (!account) {
     return NextResponse.json(
       { success: false, error: "Instagram account not connected." },

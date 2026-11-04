@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentWorkspaceId } from "@/lib/auth";
-import { getWorkspaceInstagramAccount } from "@/lib/instagram-accounts";
+import { instagramAccountForRequest } from "@/lib/access/service";
 import {
   getConversations,
   sendDirectMessage,
@@ -29,19 +28,7 @@ export interface ConversationsResponse {
 
 // List the account's DM conversations for the inbox.
 export async function GET(request: NextRequest) {
-  const workspaceId = await getCurrentWorkspaceId();
-  if (!workspaceId) {
-    return NextResponse.json(
-      { success: false, error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
-
-  const account = await getWorkspaceInstagramAccount(
-    workspaceId,
-    request.nextUrl.searchParams.get("instagramAccountId"),
-    "inbox.read"
-  );
+  const account = await instagramAccountForRequest(request, request.nextUrl.searchParams.get("instagramAccountId"), "inbox.read");
   if (!account) {
     return NextResponse.json(
       { success: false, error: "Instagram account not connected." },
@@ -104,14 +91,6 @@ export async function GET(request: NextRequest) {
 
 // Send a direct message reply.
 export async function POST(request: NextRequest) {
-  const workspaceId = await getCurrentWorkspaceId();
-  if (!workspaceId) {
-    return NextResponse.json(
-      { success: false, error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
-
   let body: {
     instagramAccountId?: string;
     recipientId?: string;
@@ -136,11 +115,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const account = await getWorkspaceInstagramAccount(
-    workspaceId,
-    body.instagramAccountId ?? null,
-    "inbox.reply"
-  );
+  const account = await instagramAccountForRequest(request, body.instagramAccountId ?? null, "inbox.reply");
   if (!account) {
     return NextResponse.json(
       { success: false, error: "Instagram account not connected." },
