@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentWorkspaceId } from "@/lib/auth";
-import { getWorkspaceInstagramAccount } from "@/lib/instagram-accounts";
+import { instagramAccountForRequest } from "@/lib/access/service";
 import {
   createInstagramContext,
   sendCommentReply,
@@ -12,14 +11,6 @@ import {
 
 // Answers a comment, either publicly under it or as a private DM.
 export async function POST(request: NextRequest) {
-  const workspaceId = await getCurrentWorkspaceId();
-  if (!workspaceId) {
-    return NextResponse.json(
-      { success: false, error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
-
   let body: {
     instagramAccountId?: string;
     commentId?: string;
@@ -52,11 +43,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const account = await getWorkspaceInstagramAccount(
-    workspaceId,
-    body.instagramAccountId ?? null,
-    "comment.reply"
-  );
+  const account = await instagramAccountForRequest(request, body.instagramAccountId ?? null, "comment.reply");
   if (!account) {
     return NextResponse.json(
       { success: false, error: "Instagram account not connected." },

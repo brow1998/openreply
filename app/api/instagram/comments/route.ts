@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentWorkspaceId } from "@/lib/auth";
-import { getWorkspaceInstagramAccount } from "@/lib/instagram-accounts";
+import { instagramAccountForRequest } from "@/lib/access/service";
 import {
   createInstagramContext,
   getInboxPosts,
@@ -49,19 +48,7 @@ export interface CommentsResponse {
 
 // The newest posts with their newest comments, for the Comments inbox.
 export async function GET(request: NextRequest) {
-  const workspaceId = await getCurrentWorkspaceId();
-  if (!workspaceId) {
-    return NextResponse.json(
-      { success: false, error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
-
-  const account = await getWorkspaceInstagramAccount(
-    workspaceId,
-    request.nextUrl.searchParams.get("instagramAccountId"),
-    "comment.read"
-  );
+  const account = await instagramAccountForRequest(request, request.nextUrl.searchParams.get("instagramAccountId"), "comment.read");
   if (!account) {
     return NextResponse.json(
       { success: false, error: "Instagram account not connected." },

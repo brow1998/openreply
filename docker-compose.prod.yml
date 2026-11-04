@@ -31,6 +31,9 @@ x-app: &app
     # exactly as before (magic link + ALLOWED_EMAILS). Public client, no secret.
     PEDRO_OAUTH_CLIENT_ID: ${PEDRO_OAUTH_CLIENT_ID:-}
     PEDRO_BASE_URL: ${PEDRO_BASE_URL:-https://pedro.useshelfie.com}
+    # Shared with Pedro's server: lets it read and answer for a channel after its
+    # own can() check. Empty = the service path is closed.
+    PEDRO_SERVICE_SECRET: ${PEDRO_SERVICE_SECRET:-}
     # Where operational alerts (worker down, token expiring...) are mailed, besides workspace owners.
     OPS_ALERT_EMAIL: ${OPS_ALERT_EMAIL:-${ALLOWED_EMAILS}}
     META_GRAPH_API_VERSION: ${META_GRAPH_API_VERSION:-v25.0}
