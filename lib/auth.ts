@@ -12,6 +12,7 @@ import {
   isPedroAuthEnabled,
   PEDRO_PROVIDER_ID,
   PEDRO_SCOPE,
+  pedroBaseUrl,
   pedroEndpoints,
 } from "@/lib/access/pedro";
 import { refreshUserGrants } from "@/lib/access/refresh";
@@ -42,6 +43,9 @@ function pedroProvider(): OAuthConfig<PedroAccess> {
     id: PEDRO_PROVIDER_ID,
     name: "Pedro",
     type: "oauth",
+    // Pedro returns `iss` on the callback (RFC 9207); without the issuer here
+    // Auth.js compares it to a placeholder and fails every sign-in.
+    issuer: pedroBaseUrl(),
     clientId: process.env.PEDRO_OAUTH_CLIENT_ID,
     client: { token_endpoint_auth_method: "none" },
     checks: ["pkce", "state"],
